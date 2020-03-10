@@ -6,8 +6,9 @@ LINUXUSER=qTracker
 LINUXFOLDER=cpp
 
 OBJS = main.o Server.o 
-
-all: $(PROG) .depend
+all:
+	make build && ./qTracker
+build: $(PROG) .depend
 
 $(PROG): $(OBJS)
 	g++ -o $@ $(OBJS) $(LDFLAGS)
