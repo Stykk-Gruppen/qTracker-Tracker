@@ -1,2 +1,3 @@
-main.o: main.cpp Server.h
+main.o: main.cpp Server.h bencode.hpp
 Server.o: Server.cpp Server.h
+Database.o: Database.cpp Database.h
