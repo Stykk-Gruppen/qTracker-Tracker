@@ -1,3 +1,4 @@
 *.o
 qTracker
 config.cpp
+.depend
