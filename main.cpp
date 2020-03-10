@@ -1,7 +1,9 @@
-
+#include "Server.h"
 
 int main()
 {
-	
-		return 0;
+	Server s(8080);
+	s.central();
+
+	return 0;
 }

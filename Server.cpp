@@ -43,19 +43,19 @@ void Server::handle_client(int newsockfd)
 	bzero(buffer, 4096);
 	read(newsockfd, buffer, 4096);
 
-	Http h(array_to_string(buffer, 4096));
+	//Http h(array_to_string(buffer, 4096));
 	std::string answer;
 	try
 	{
-		h.handle_message();
+		//h.handle_message();
 	}
 	catch (...)
 	{
-		answer = h.build_answer(false);
+		//answer = h.build_answer(false);
 	}
-	answer = h.build_answer(true);
+	//answer = h.build_answer(true);
 
-	write(newsockfd, answer.c_str(), strlen(answer.c_str()));
+	//write(newsockfd, answer.c_str(), strlen(answer.c_str()));
 }
 
 std::string Server::array_to_string(char* arr, int size)

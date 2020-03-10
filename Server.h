@@ -7,7 +7,6 @@
 #include <sys/wait.h>
 #include <netinet/in.h>
 #include <signal.h>
-#include "Http.h"
 #include <string>
 
 class Server

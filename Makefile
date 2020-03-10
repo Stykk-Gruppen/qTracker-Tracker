@@ -4,7 +4,7 @@ CPPFLAGS =
 LDFLAGS = 
 SFTPFILE=sftp
 
-OBJS = main.o 
+OBJS = main.o Server.o 
 
 all: $(PROG) .depend
 
