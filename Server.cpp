@@ -55,7 +55,7 @@ void Server::handle_client(int newsockfd)
 		//answer = h.build_answer(false);
 	}
 	//answer = h.build_answer(true);
-
+	answer = "HTTP/1.1 104"
 	//write(newsockfd, answer.c_str(), strlen(answer.c_str()));
 }
 
