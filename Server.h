@@ -14,6 +14,7 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <vector>
 class Server
 {
 public:

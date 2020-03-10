@@ -1,5 +1,7 @@
 #include "Server.h"
 
+using namespace std;
+
 Server::Server(int _port): port(_port)
 {
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -55,8 +57,50 @@ void Server::handle_client(int newsockfd)
 	read(newsockfd, buffer, 4096);
 
 	//Http h(array_to_string(buffer, 4096));
-	std::cout << array_to_string(buffer, 4096);
-	std::string answer;
+	//std::cout << array_to_string(buffer, 4096);
+	//std::string answer;
+	std::vector<std::string*> vectorOfArrays;
+	std::string keyString = "";
+	std::string valueString = "";
+	bool key = false;
+	bool value = false;
+	for(int i=0;i<buffersize;i++)
+	{
+		char c = buffer[i];
+		if(c=='?')
+		{
+			key = true;
+			continue;
+		}
+		if(c=='=')
+		{
+			key = false;
+			value = true;
+			continue;
+		}
+		if(value && (c=='&' || c==' '))
+		{
+			//cout << "key: " << keyString << "   value: " << valueString << endl;
+			key = true;
+			value = false;
+			string *stringArray = new string[2];
+			stringArray[0] = keyString;
+			stringArray[1] = valueString;
+			vectorOfArrays.push_back(stringArray);
+			keyString = "";
+			valueString = "";
+			continue;
+		}
+		if(key)
+		{
+			keyString += c;
+		}
+		if(value)
+		{
+			valueString += c;
+		}
+		//temp += buffer[i];
+	}
 	try
 	{
 		//h.handle_message();
@@ -65,10 +109,14 @@ void Server::handle_client(int newsockfd)
 	{
 		//answer = h.build_answer(false);
 	}
+	for(size_t x=0;x<vectorOfArrays.size();x++)
+	{
+		cout << "key: " << vectorOfArrays.at(x)[0] << "   value: " << vectorOfArrays.at(x)[1] << endl;
+	}
 	//answer = h.build_answer(true);
-	answer = "HTTP/1.1 200 OK\nd8:intervali1800e5:peersld2:id20:-lt0D60-pE0A21E5FB68680FDDCBEA6:ip20:::ffff:5.79.98.209:porti45417eeee";
-	std::cout << "Dette svarer jeg med: " << answer << "\n";
-	write(newsockfd, answer.c_str(), strlen(answer.c_str()));
+	//answer = "HTTP/1.1 200 OK\nd8:intervali1800e5:peersld2:id20:-lt0D60-pE0A21E5FB68680FDDCBEA6:ip20:::ffff:5.79.98.209:porti45417eeee";
+	//std::cout << "Dette svarer jeg med: " << answer << "\n";
+	//write(newsockfd, answer.c_str(), strlen(answer.c_str()));
 }
 
 std::string Server::array_to_string(char* arr, int size)
