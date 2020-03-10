@@ -9,7 +9,8 @@
 #include <signal.h>
 #include <string>
 #include <iostream>
-
+#include <arpa/inet.h>
+#include <netinet/in.h>
 class Server
 {
 public:

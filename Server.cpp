@@ -15,6 +15,7 @@ Server::Server(int _port): port(_port)
 	listen(sockfd, 5);
 
 	clilen = sizeof(cli_addr);
+
 }
 
 void Server::central()
@@ -23,6 +24,16 @@ void Server::central()
 	while(true)
 	{
 		newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+		//struct sockaddr_in* pV4Addr = (struct sockaddr_in*)&cli_addr;
+		//struct in_addr ipAddr = pV4Addr->sin_addr;
+		printf("IP address is: %s\n", inet_ntoa(cli_addr.sin_addr));
+		printf("port is: %d\n", (int) ntohs(cli_addr.sin_port));
+		//std::cout << cli_addr.sin_addr << "\n";
+		//char str[INET_ADDRSTRLEN];
+		//inet_ntop( AF_INET, &ipAddr, str, INET_ADDRSTRLEN );
+		
+		//std::cout << "IP: " << str << "\n";
+
 		pid = fork();
 		if(pid == 0)
 		{
@@ -55,8 +66,9 @@ void Server::handle_client(int newsockfd)
 		//answer = h.build_answer(false);
 	}
 	//answer = h.build_answer(true);
-	answer = "HTTP/1.1 104"
-	//write(newsockfd, answer.c_str(), strlen(answer.c_str()));
+	answer = "HTTP/1.1 200 OK\nd8:intervali1800e5:peersld2:id20:-lt0D60-pE0A21E5FB68680FDDCBEA6:ip20:::ffff:5.79.98.209:porti45417eeee";
+	std::cout << "Dette svarer jeg med: " << answer << "\n";
+	write(newsockfd, answer.c_str(), strlen(answer.c_str()));
 }
 
 std::string Server::array_to_string(char* arr, int size)
