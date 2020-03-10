@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <signal.h>
 #include <string>
+#include <iostream>
 
 class Server
 {

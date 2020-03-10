@@ -44,6 +44,7 @@ void Server::handle_client(int newsockfd)
 	read(newsockfd, buffer, 4096);
 
 	//Http h(array_to_string(buffer, 4096));
+	std::cout << array_to_string(buffer, 4096);
 	std::string answer;
 	try
 	{

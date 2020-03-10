@@ -1,1 +1,2 @@
-main.o: main.cpp
+main.o: main.cpp Server.h
+Server.o: Server.cpp Server.h
