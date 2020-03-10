@@ -2,7 +2,8 @@ PROG = qTracker
 CC = g++
 CPPFLAGS = 
 LDFLAGS = 
-SFTPFILE=sftp
+LINUXUSER=qTracker
+LINUXFOLDER=cpp
 
 OBJS = main.o 
 
@@ -18,3 +19,6 @@ $(PROG): $(OBJS)
 
 clean:
 	rm -f *stackdump $(PROG) *.o .depend
+
+upload:
+	echo 'put $(PROG)' | sftp $(LINUXUSER):$(LINUXFOLDER)
