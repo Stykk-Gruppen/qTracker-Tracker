@@ -57,20 +57,31 @@ void Server::handle_client(int newsockfd)
 	read(newsockfd, buffer, 4096);
 
 	//Http h(array_to_string(buffer, 4096));
-	//std::cout << array_to_string(buffer, 4096);
-	//std::string answer;
+	std::cout << array_to_string(buffer, 4096);	
 	std::vector<std::string*> vectorOfArrays;
 	std::string keyString = "";
 	std::string valueString = "";
+	std::string url = "";
 	bool key = false;
 	bool value = false;
+	int urlFound = 0;
 	for(int i=0;i<buffersize;i++)
 	{
 		char c = buffer[i];
+		if(!value && c==' ')
+		{
+			urlFound++;
+			continue;
+		}
 		if(c=='?')
 		{
+			urlFound++;
 			key = true;
 			continue;
+		}
+		if(urlFound==1)
+		{
+			url += c;
 		}
 		if(c=='=')
 		{
@@ -101,22 +112,91 @@ void Server::handle_client(int newsockfd)
 		}
 		//temp += buffer[i];
 	}
-	try
-	{
-		//h.handle_message();
-	}
-	catch (...)
-	{
-		//answer = h.build_answer(false);
-	}
+	string *urlArray = new string[2];
+	urlArray[0] = "url";
+	urlArray[1] = url;
+	string *urlKeyArray = new string[2];
+	urlKeyArray[0] = "urlKey";
+	urlKeyArray[1] = getKeyFromURL(url);
+	vectorOfArrays.push_back(urlArray);
+	vectorOfArrays.push_back(urlKeyArray);
+
 	for(size_t x=0;x<vectorOfArrays.size();x++)
 	{
-		cout << "key: " << vectorOfArrays.at(x)[0] << "   value: " << vectorOfArrays.at(x)[1] << endl;
+		cout << vectorOfArrays.at(x)[0] << "=" << vectorOfArrays.at(x)[1] << endl;
 	}
-	//answer = h.build_answer(true);
-	//answer = "HTTP/1.1 200 OK\nd8:intervali1800e5:peersld2:id20:-lt0D60-pE0A21E5FB68680FDDCBEA6:ip20:::ffff:5.79.98.209:porti45417eeee";
-	//std::cout << "Dette svarer jeg med: " << answer << "\n";
-	//write(newsockfd, answer.c_str(), strlen(answer.c_str()));
+	
+	std::ostringstream stream;
+	bencode::encode(stream, bencode::dict{
+		{"tracker_id", 1},
+		{"peers", bencode::list{
+			bencode::dict{
+				{"peer_id", 1},
+				{"ip", 1},
+				{"port", 1}
+			},
+			bencode::dict{
+				{"peer_id", 1},
+				{"ip", 1},
+				{"port", 1}
+			},
+			bencode::dict{
+				{"peer_id", 1},
+				{"ip", 1},
+				{"port", 1}
+			},
+			bencode::dict{
+				{"peer_id", 1},
+				{"ip", 1},
+				{"port", 1}
+			},
+			bencode::dict{
+				{"peer_id", 1},
+				{"ip", 1},
+				{"port", 1}
+			}
+		}
+	},
+	{"interval", "3"},
+	{"complete", "3"},
+	{"incomplete", "3"}
+	});
+	std::string streamString =  stream.str();
+	std::string answer = "";
+	answer += "HTTP/1.1 200 OK\r\n";
+	answer += "Content-length: ";
+	answer += to_string(strlen(streamString.c_str()));
+	answer += "\r\n";
+	answer += "Content-Type: text/plain\r\n";
+	answer += "Connection: close\r\n";
+	answer += "\r\n";
+	answer += streamString;
+	write(newsockfd, answer.c_str(), strlen(answer.c_str()));
+}
+
+std::string Server::buildDictionary()
+{
+	//std::string test = "{}";
+	//std::string encodedString = boost::get<bencode::string>(test);
+}
+
+std::string Server::getKeyFromURL(std::string url)
+{
+	std::string key = "";
+	int slashCount = 0;
+	for(int i=0;i<url.length();i++)
+	{
+		if(url[i]=='/')
+		{
+			slashCount++;
+			continue;
+		}
+		if(slashCount == 1)
+		{
+			key+=url[i];
+		}
+	}
+	return key;
 }
 
 std::string Server::array_to_string(char* arr, int size)

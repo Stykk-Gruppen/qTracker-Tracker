@@ -15,6 +15,11 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <vector>
+#include <map>
+#include "bencode.hpp"
+
+using namespace bencode;
+
 class Server
 {
 public:
@@ -32,8 +37,9 @@ private:
 	struct sockaddr_in cli_addr;
 	static const int buffersize = 4096;
 	char buffer[buffersize];
-
+	std::string getKeyFromURL(std::string);
 	std::string array_to_string(char* arr, int size);
+	std::string buildDictionary();
 };
 
 #endif
