@@ -1,14 +1,13 @@
 PROG = qTracker
 CC = g++
-CPPFLAGS = 
-LDFLAGS = 
-LINUXUSER=qTracker
-LINUXFOLDER=cpp
+CPPFLAGS = -I /usr/include -L /usr/lib
+LDFLAGS = -lmysqlcppconn
+LINUXUSER = qTracker
+LINUXFOLDER = cpp
 
-OBJS = main.o Server.o 
-all:
-	make build && ./qTracker
-build: $(PROG) .depend
+OBJS = main.o Server.o Database.o
+
+all: $(PROG) .depend
 
 $(PROG): $(OBJS)
 	g++ -o $@ $(OBJS) $(LDFLAGS)

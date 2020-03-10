@@ -1,3 +1,6 @@
+#ifndef SERVER_H
+#define SERVER_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,3 +34,5 @@ private:
 
 	std::string array_to_string(char* arr, int size);
 };
+
+#endif
