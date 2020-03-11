@@ -202,6 +202,7 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 		if(vectorOfArrays.at(x)[0].compare("event") == 0)
 		{
 			event = parseEventString(vectorOfArrays.at(x)[1]);
+            std::cout << "event: " << event << std::endl;
 			continue;
 		}
 		if(vectorOfArrays.at(x)[0].compare("info_hash") == 0)
