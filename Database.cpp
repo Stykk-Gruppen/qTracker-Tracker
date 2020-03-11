@@ -243,6 +243,7 @@ bool Database::getUserId(std::string torrentPass, int *userId)
 	if (res->next())
 	{
 		*userId = res->getInt("id");
+        std::cout << "Got user Id" << std::endl;
 		return true;
 	}
 	else
