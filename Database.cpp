@@ -85,6 +85,7 @@ std::vector<int> Database::getFiles(std::string infoHash)
     }
     catch (sql::SQLException &e)
     {
+        std::cout << "Database::getFiles ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return vector;
@@ -120,15 +121,18 @@ bool Database::updateFile(int fileId)
         pstmt->setInt(1, fileId);
         if (pstmt->executeUpdate() > 0)
         {
+            std::cout << "Updated file" << std::endl;
             return true;
         }
         else
         {
+            std::cout << "Failed to update file" << std::endl;
             return false;
         }
     }
     catch (sql::SQLException &e)
     {
+        std::cout << "Database::updateFile ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return false;
@@ -294,6 +298,7 @@ int Database::insertAnnounceLog(std::string ipa, int port, int event, std::strin
         }
         catch (sql::SQLException &e)
         {
+            std::cout << "Database::insertAnnounceLog ";
             std::cout << " (MySQL error code: " << e.getErrorCode();
             std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
             return false;
@@ -329,6 +334,7 @@ bool Database::createFile(std::string infoHash)
     }
     catch (sql::SQLException &e)
     {
+        std::cout << "Database::createFile ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return false;
@@ -368,6 +374,7 @@ int Database::getTorrentId(std::string infoHash)
     }
     catch (sql::SQLException &e)
     {
+        std::cout << "Database::getTorrentId ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return false;
@@ -430,7 +437,9 @@ bool Database::getUserId(std::string torrentPass, int *userId)
     		return false;
     	}
     }
-    catch (sql::SQLException &e) {
+    catch (sql::SQLException &e)
+    {
+        std::cout << "Database::getUserId ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return false;
@@ -472,6 +481,7 @@ bool Database::userCanLeech(int userId)
     }
     catch (sql::SQLException &e)
     {
+        std::cout << "Database::userCanLeech ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return false;
@@ -513,25 +523,24 @@ bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::stri
             pstmt->setString(6, peerId); 
             if (pstmt->executeUpdate() > 0)
             {
-                std::cout << "Successfully UPDATED to announceLog QUERY" << std::endl;
+                std::cout << "Updated announceLog" << std::endl;
                 updateFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
                 return true;
             }
             else
             {
-                std::cout << "Failed to UPDATE to announceLog QUERY. Maybe it doesn't exist" << std::endl;
+                std::cout << "Failed to update announceLog. Will try to create one insted." << std::endl;
                 return insertAnnounceLog(ipa, port, event, infoHash,
                     peerId, downloaded, left, uploaded, userId);
             }
         }
         catch (sql::SQLException &e)
         {
+            std::cout << "Database::updateAnnounceLog ";
             std::cout << " (MySQL error code: " << e.getErrorCode();
             std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
             return false;
         }
-
-	
     }
     else
     {
@@ -572,6 +581,7 @@ std::vector<Peer*> Database::getPeers(int fileId)
     }
     catch (sql::SQLException &e)
     {
+        std::cout << "Database::getPeers ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return peers;
@@ -611,15 +621,18 @@ bool Database::createFilesUsers(int fileId, int userId, int downloaded, int uplo
         if( pstmt->executeQuery())
         {
             updateFile(fileId);
+            std::cout << "Created fileUsers" << std::endl;
             return true;
         }
         else
         {
+            std::cout << "Failed to create fileUsers" << std::endl;
             return false;
         }
     }
     catch (sql::SQLException &e)
     {
+        std::cout << "Database::createFilesUsers ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return false;
@@ -671,16 +684,19 @@ bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uplo
         pstmt->setInt(10, userId);
         if (pstmt->executeUpdate() > 0)
         {
+            std::cout << "Updated fileUsers" << std::endl;
             updateFile(fileId);
             return true;
         }
         else
         {
+            std::cout << "Failed to update fileUsers. Will try to create one instead." << std::endl;
             return createFilesUsers(fileId, userId, downloaded, uploaded, left);
         } 
     }
     catch (sql::SQLException &e)
     {
+        std::cout << "Database::updateFilesUsers ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return false;
