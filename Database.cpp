@@ -419,13 +419,13 @@ bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::stri
             pstmt->setString(6, peerId); 
             if (pstmt->execute())
             {
-                std::cout << "Successfully added to announceLog QUERY" << std::endl;
+                std::cout << "Successfully UPDATED to announceLog QUERY" << std::endl;
                 updateFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
                 return true;
             }
             else
             {
-                std::cout << "Failed to add to announceLog QUERY" << std::endl;
+                std::cout << "Failed to UPDATE to announceLog QUERY. Maybe it doesn't exist" << std::endl;
                 return insertAnnounceLog(ipa, port, event, infoHash,
                     peerId, downloaded, left, uploaded, userId);
             }
