@@ -201,6 +201,7 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 		}
 		if(vectorOfArrays.at(x)[0].compare("event") == 0)
 		{
+             std::cout << "event before: " << vectorOfArrays.at(x)[1] << std::endl;
 			event = parseEventString(vectorOfArrays.at(x)[1]);
             std::cout << "event: " << event << std::endl;
 			continue;
@@ -285,14 +286,14 @@ int Database::insertAnnounceLog(std::string ipa, int port, int event, std::strin
             if (pstmt->executeQuery())
             {
                 //mysql_num_rows(MYSQL_RES *result)
-                std::cout << "Successfully added announceLog WOOHOO" << std::endl;
+                std::cout << "Added new announceLog" << std::endl;
                 createFile(infoHash);
                 createFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
                 return true;
             }
             else
             {
-                std::cout << "Failed to add announceLog RIP" << std::endl;
+                std::cout << "Failed to add new announceLog" << std::endl;
                 return false;
             }
             
@@ -492,7 +493,6 @@ bool Database::userCanLeech(int userId)
 bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
 	std::string peerId, int downloaded, int left, int uploaded, std::string torrentPass)
 {
-    std::cout << "Inside updateAnnounceLog" << std::endl;
     int userId = -1;
     if (getUserId(torrentPass, &userId))
     {
@@ -530,7 +530,7 @@ bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::stri
             }
             else
             {
-                std::cout << "Failed to update announceLog. Will try to create one insted." << std::endl;
+                std::cout << "Failed to update announceLog. Will try to create one instead." << std::endl;
                 return insertAnnounceLog(ipa, port, event, infoHash,
                     peerId, downloaded, left, uploaded, userId);
             }
