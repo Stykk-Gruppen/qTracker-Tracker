@@ -77,8 +77,13 @@ std::string Database::urlDecode(std::string urlEncodedString)
 	std::string output = "";
 	for(int i=0;i<urlEncodedString.length();i++)
 	{
-		
+		if(urlEncodedString[i]=='%')
+		{
+			continue;
+		}
+		output+=urlEncodedString[i];
 	}
+	return output;
 }
 
 //Return Id of Torrent in Database
@@ -112,12 +117,12 @@ int Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
 		}
 		if(vectorOfArrays.at(x)[1].compare("info_hash") == 0)
 		{
-			infoHash = vectorOfArrays.at(x)[1];
+			infoHash = urlDecode(vectorOfArrays.at(x)[1]);
 			continue;
 		}
 		if(vectorOfArrays.at(x)[1].compare("peer_id") == 0)
 		{
-			peerId = vectorOfArrays.at(x)[1];
+			peerId = urlDecode(vectorOfArrays.at(x)[1]);
 			continue;
 		}
 		if(vectorOfArrays.at(x)[1].compare("downloaded") == 0)
