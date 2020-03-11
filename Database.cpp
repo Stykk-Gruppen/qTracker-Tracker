@@ -247,6 +247,7 @@ bool Database::getUserId(std::string torrentPass, int *userId)
 	}
 	else
 	{
+        std::cout << "Couldn't get user Id" << std::endl;
 		return false;
 	}
 }
@@ -260,10 +261,12 @@ bool Database::userCanLeech(int userId)
 	sql::ResultSet* res = pstmt->executeQuery();
 	if (res->next())
 	{
+        std::cout << "User can leech" << std::endl;
 		return (res->getInt("canLeech")) ? true : false;
 	}
 	else
 	{
+        std::cout << "User can't leech" << std::endl;
 		return false;
 	}
 }
@@ -289,11 +292,13 @@ bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::stri
     	pstmt->setString(5, peerId); 
     	if (pstmt->executeQuery())
     	{
+            std::cout << "Successfully added to announceLog QUERY" << std::endl;
             updateFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
     		return true;
     	}
     	else
     	{
+            std::cout << "Failed to add to announceLog QUERY" << std::endl;
     		return insertAnnounceLog(ipa, port, event, infoHash,
     			peerId, downloaded, left, uploaded, userId);
     	}
