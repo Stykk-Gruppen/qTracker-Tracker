@@ -56,6 +56,8 @@ Torrent Database::getTorrent(int torrentId)
 
     Peer p1("-lt0D60-B8048EED9AE36nF2073D1", "5.79.98.209", "59130");
     t.peers.push_back(p1);
+    Peer p2("-qB4170-f7j06WXZAX-I", "79.160.58.120", "8999");
+    t.peers.push_back(p2);
     
     return t;
 }
