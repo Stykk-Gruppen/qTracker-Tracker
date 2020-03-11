@@ -50,24 +50,24 @@ void Server::handle_client(int newsockfd)
 	read(newsockfd, buffer, 4096);
 
 	std::cout << array_to_string(buffer, 4096);	
-	int torrentId = parseAndInsertMessage();
+	std::string infoHash = parseAndInsertMessage();
 	
-	std::string answer = buildDictionary(torrentId);
+	std::string answer = buildDictionary(infoHash);
 	std::cout << answer << "\n";
 	write(newsockfd, answer.c_str(), strlen(answer.c_str()));
 }
 
-std::string Server::buildDictionary(int torrentId)
+std::string Server::buildDictionary(std::string infoHash)
 {
-	Torrent t = db->getTorrent(torrentId);
+	Torrent t = db->getTorrent(infoHash);
 
 	auto peers = bencode::list{};
 	for(auto peer : t.peers)
 	{
 		peers.push_back(bencode::dict{
-				{"peer_id", peer.peer_id},
-				{"ip", peer.ip},
-				{"port", peer.port}
+				{"peer_id", peer->peer_id},
+				{"ip", peer->ip},
+				{"port", peer->port}
 			});
 	}
 	std::ostringstream stream;
@@ -121,7 +121,7 @@ std::string Server::array_to_string(char* arr, int size)
 	return s;
 }
 
-int Server::parseAndInsertMessage()
+std::string Server::parseAndInsertMessage()
 {
 	std::vector<std::string*> vectorOfArrays;
 	std::string keyString = "";
@@ -195,13 +195,12 @@ int Server::parseAndInsertMessage()
 		cout << vectorOfArrays.at(x)[0] << "=" << vectorOfArrays.at(x)[1] << endl;
 	}
 
-	int torrentId = db->insertClientInfo(vectorOfArrays);
+	std::string infoHash = db->insertClientInfo(vectorOfArrays);
 
 	for(int i = 0; i < vectorOfArrays.size(); i++)
 	{
 		delete[] vectorOfArrays[i];
 	}
 
-
-	return torrentId;
+	return infoHash;
 }

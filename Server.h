@@ -39,10 +39,10 @@ private:
 	static const int buffersize = 4096;
 	char buffer[buffersize];
 	Database* db;
-	int parseAndInsertMessage();
+	std::string parseAndInsertMessage();
 	std::string getKeyFromURL(std::string);
 	std::string array_to_string(char* arr, int size);
-	std::string buildDictionary(int torrentId);
+	std::string buildDictionary(std::string infoHash);
 };
 
 #endif

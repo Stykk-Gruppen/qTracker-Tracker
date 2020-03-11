@@ -15,7 +15,7 @@ public:
 	int seeders;
 	int leechers;
 	int interval = 3;
-	std::vector<Peer> peers;
+	std::vector<Peer*> peers;
 };
 
 #endif
