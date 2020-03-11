@@ -116,7 +116,7 @@ bool Database::updateFile(int fileId)
             "SET "
             "seeders = (SELECT COUNT(isActive) FROM filesUsers WHERE fileId = ?), "
             "leechers = (SELECT COUNT(isActive) FROM filesUsers WHERE completed = 0 AND fileId = ?), "
-            "completed = (SELECT COUNT(completed) FROM fileUsers WHERE fileId = ?) "
+            "completed = (SELECT COUNT(completed) FROM filesUsers WHERE fileId = ?) "
             "WHERE fileId = ?;"
         );
         pstmt->setInt(1, fileId);
