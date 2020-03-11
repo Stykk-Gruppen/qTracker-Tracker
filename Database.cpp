@@ -419,7 +419,7 @@ bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::stri
             pstmt->setInt(4, uploaded);
             pstmt->setString(5, infoHash);
             pstmt->setString(6, peerId); 
-            if (pstmt->execute())
+            if (pstmt->executeUpdate() > 0)
             {
                 std::cout << "Successfully UPDATED to announceLog QUERY" << std::endl;
                 updateFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
@@ -545,7 +545,7 @@ bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uplo
         pstmt->setInt(8, left);
         pstmt->setInt(9, fileId);
         pstmt->setInt(10, userId);
-        if (pstmt->executeQuery())
+        if (pstmt->executeUpdate() > 0)
         {
             return true;
         }
