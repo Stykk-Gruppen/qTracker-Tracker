@@ -23,16 +23,19 @@
 class Database{
 public:
 	Database();
+
 	//Return torrentId from DB.
 	int insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
 	Torrent getTorrent(int torrentId);
-	bool updateAnnounceLog(std::vector<std::string> vector);
+	bool updateAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
+	 std::string peerId, double downloaded, double left, double uploaded, std::string torrentPass);
 	int getTorrentId(std::string infoHash);
 	void connect();
 private:
-	bool insertAnnounceLog(std::vector<std::string> vector);
-	bool getUserId(std::string torrentPass, std::string *userId);
-	bool userCanLeech(std::string userId);
+	bool insertAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
+	 std::string peerId, double downloaded, double left, double uploaded, std::string torrentPass);
+	bool getUserId(std::string torrentPass, int *userId);
+	bool userCanLeech(int userId);
 	bool makeFile(std::string infoHash);
 	sql::Connection *con;
 };
