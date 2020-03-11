@@ -483,7 +483,7 @@ bool Database::createFilesUsers(int fileId, int userId, int downloaded, int uplo
 
         pstmt = con->prepareStatement
         (
-            "INSERT INTO fileUsers"
+            "INSERT INTO filesUsers"
             "(fileId, userId, downloaded, uploaded, `left`)"
             "VALUES (?, ?, ?, ?, ?)"
         );
