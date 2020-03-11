@@ -47,7 +47,13 @@ int Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
 Torrent Database::getTorrent(int torrentId)
 {
     Torrent t;
-
+    t.trackerId = 1;
+    for(int i = 0; i < 3; i++)
+    {
+        Peer p(i,i,i);
+        t.peers.push_back(p);
+    }
+    
     return t;
 }
 
