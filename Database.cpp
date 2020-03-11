@@ -115,8 +115,8 @@ bool Database::updateFile(int fileId)
             "UPDATE files "
             "SET "
             "seeders = (SELECT COUNT(isActive) FROM filesUsers WHERE fileId = ?), "
-            "leechers = (SELECT COUNT(isActive) FROM filesUsers WHERE completed = 0AND fileId = ?) "
-            "completed = (SELECT COUNT(completed) FROM fileUsers WHERE fileId = ?"
+            "leechers = (SELECT COUNT(isActive) FROM filesUsers WHERE completed = 0 AND fileId = ?), "
+            "completed = (SELECT COUNT(completed) FROM fileUsers WHERE fileId = ?) "
             "WHERE fileId = ?;"
         );
         pstmt->setInt(1, fileId);
@@ -300,7 +300,6 @@ int Database::insertAnnounceLog(std::string ipa, int port, int event, std::strin
                 std::cout << "Failed to add new announceLog" << std::endl;
                 return false;
             }
-            
         }
         catch (sql::SQLException &e)
         {
