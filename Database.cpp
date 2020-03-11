@@ -43,15 +43,25 @@ Database::Database()
 int Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
 {
     //insertIntoDB
-
     return 1;
 }
 
-std::vector<std::string*> Database::getPeersForTorrent(int torrentId)
+Torrent Database::getTorrent(int torrentId)
 {
-    std::vector<std::string*> vectorOfArrays;
-    //Fill from db
-    return vectorOfArrays;
+    Torrent t;
+    t.trackerId = 1;
+    /*for(int i = 0; i < 3; i++)
+    {
+        Peer p(i,i,i);
+        t.peers.push_back(p);
+    }*/
+
+    Peer p1("-lt0D60-B8048EED9AE36nF2073D1", "5.79.98.209", "59130");
+    t.peers.push_back(p1);
+    Peer p2("-qB4170-f7j06WXZAX-I", "79.160.58.120", "8999");
+    t.peers.push_back(p2);
+    
+    return t;
 }
 
 bool Database::getUserId(std::string torrentPass, int *userId)

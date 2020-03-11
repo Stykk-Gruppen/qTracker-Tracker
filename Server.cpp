@@ -59,10 +59,29 @@ void Server::handle_client(int newsockfd)
 
 std::string Server::buildDictionary(int torrentId)
 {
-	std::vector<std::string*> vectorOfArrays = db->getPeersForTorrent(torrentId);
+	Torrent t = db->getTorrent(torrentId);
+
+	auto peers = bencode::list{};
+	for(auto peer : t.peers)
+	{
+		peers.push_back(bencode::dict{
+				{"peer_id", peer.peer_id},
+				{"ip", peer.ip},
+				{"port", peer.port}
+			});
+	}
 	std::ostringstream stream;
 	bencode::encode(stream, bencode::dict{
-		{"tracker_id", 1},
+		{"tracker_id", t.trackerId},
+		{"peers", peers
+	},
+	{"interval", "3"},
+	{"complete", "3"},
+	{"incomplete", "3"}
+	});
+
+	/*bencode::encode(stream, bencode::dict{
+		{"tracker_id", t.trackerId},
 		{"peers", bencode::list{
 			bencode::dict{
 				{"peer_id", 1},
@@ -94,7 +113,7 @@ std::string Server::buildDictionary(int torrentId)
 	{"interval", "3"},
 	{"complete", "3"},
 	{"incomplete", "3"}
-	});
+	});*/
 	std::string streamString =  stream.str();
 	std::string answer = "";
 	answer += "HTTP/1.1 200 OK\r\n";

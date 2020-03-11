@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include "config.cpp"
+#include "Torrent.h"
 
 /*
   Include directly the different
@@ -24,7 +25,7 @@ public:
 	Database();
 	//Return torrentId from DB.
 	int insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
-	std::vector<std::string*> getPeersForTorrent(int torrentId);
+	Torrent getTorrent(int torrentId);
 	bool getUserId(std::string torrentPass, int *userId);
 	void connect();
 private:
