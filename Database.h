@@ -38,10 +38,12 @@ private:
 	std::string urlDecode(std::string);
 	int parseEventString(std::string);
 	int insertAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, int downloaded, int left, int uploaded, std::string torrentPass);
+		std::string peerId, int downloaded, int left, int uploaded, int userId);
 	bool getUserId(std::string torrentPass, int *userId);
 	bool userCanLeech(int userId);
-	bool makeFile(std::string infoHash);
+	bool createFile(std::string infoHash);
+	bool createFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left);
+	bool updateFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left);
 	sql::Connection *con;
 };
 

@@ -146,14 +146,13 @@ int Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
 			continue;
 		}
 	}
-	return insertAnnounceLog(ipa,port,event,infoHash,peerId,downloaded,left,uploaded,torrentPass);
+	return updateAnnounceLog(ipa,port,event,infoHash,peerId,downloaded,left,uploaded,torrentPass);
 }
 
 int Database::insertAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, int downloaded, int left, int uploaded, std::string torrentPass)
+	std::string peerId, int downloaded, int left, int uploaded, int userId)
 {
-	int userId = -1;
-	if(getUserId(torrentPass, &userId) && userCanLeech(userId))
+	if(userCanLeech(userId))
 	{
 		connect();
 		sql::PreparedStatement *pstmt;
@@ -173,7 +172,8 @@ int Database::insertAnnounceLog(std::string ipa, int port, int event, std::strin
 		if (pstmt->executeQuery())
 		{
         	//mysql_num_rows(MYSQL_RES *result)
-			makeFile(infoHash);
+			createFile(infoHash);
+            createFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
 			return true;
 		}
 		else
@@ -187,7 +187,7 @@ int Database::insertAnnounceLog(std::string ipa, int port, int event, std::strin
 	}
 }
 
-bool Database::makeFile(std::string infoHash)
+bool Database::createFile(std::string infoHash)
 {
 	connect();
 	sql::PreparedStatement *pstmt;
@@ -277,27 +277,36 @@ bool Database::userCanLeech(int userId)
 bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
 	std::string peerId, int downloaded, int left, int uploaded, std::string torrentPass)
 {
-	connect();
-	sql::PreparedStatement *pstmt;
-	pstmt = con->prepareStatement
-	(
-		"UPDATE announceLog SET event = ?, downloaded = ?, left = ?, uploaded = ?, modifiedTime = NOW() WHERE infoHash = ? AND peerId = ?"
-		);
-	pstmt->setInt(1, event);
-	pstmt->setInt(2, downloaded);
-	pstmt->setInt(3, left);
-	pstmt->setInt(3, uploaded);
-	pstmt->setString(4, infoHash);
-	pstmt->setString(5, peerId); 
-	if (pstmt->executeQuery())
-	{
-		return true;
-	}
-	else
-	{
-		return insertAnnounceLog(ipa, port, event, infoHash,
-			peerId, downloaded, left, uploaded, torrentPass);
-	}
+    int userId = -1;
+    if (getUserId(torrentPass, &userId))
+    {
+    	connect();
+    	sql::PreparedStatement *pstmt;
+    	pstmt = con->prepareStatement
+    	(
+    		"UPDATE announceLog SET event = ?, downloaded = ?, left = ?, uploaded = ?, modifiedTime = NOW() WHERE infoHash = ? AND peerId = ?"
+    		);
+    	pstmt->setInt(1, event);
+    	pstmt->setInt(2, downloaded);
+    	pstmt->setInt(3, left);
+    	pstmt->setInt(3, uploaded);
+    	pstmt->setString(4, infoHash);
+    	pstmt->setString(5, peerId); 
+    	if (pstmt->executeQuery())
+    	{
+            updateFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
+    		return true;
+    	}
+    	else
+    	{
+    		return insertAnnounceLog(ipa, port, event, infoHash,
+    			peerId, downloaded, left, uploaded, userId);
+    	}
+    }
+    else
+    {
+        return false;
+    }
 }
 
 std::vector<Peer*> Database::getPeers(int torrentId)
@@ -315,4 +324,69 @@ std::vector<Peer*> Database::getPeers(int torrentId)
 		peers.push_back(new Peer(peerId, ipa, port));
 	}
 	return peers;
+}
+
+bool Database::createFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left)
+{
+    bool returnBool;
+    connect();
+    sql::PreparedStatement *pstmt;
+    pstmt = con->prepareStatement
+    (
+        "INSERT INTO fileUsers"
+        "(fileId, userId, downloaded, uploaded, left)"
+        "VALUES (?, ?, ?, ?, ?)"
+    );
+    pstmt->setInt(1, fileId);
+    pstmt->setInt(2, userId);
+    pstmt->setInt(3, downloaded);
+    pstmt->setInt(4, uploaded);
+    pstmt->setInt(5, left);
+    returnBool = (pstmt->executeQuery()) ? true : false;
+    delete pstmt;
+    delete con;
+    return returnBool;
+}
+
+bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left)
+{
+    connect();
+    sql::PreparedStatement *pstmt;
+    pstmt = con->prepareStatement
+    (
+        "UPDATE fileUsers"
+        "SET" 
+        "isActive = 1,"
+        "announced = announced + 1,"
+        "completed = IF(? == 0, 1, 0),"
+        "downloaded = IF(downloaded > ?, downloaded + ?, ?),"
+        "uploaded = IF(uploaded > ?, uploaded + ?, ?),"
+        "left = ?,"
+        "modifiedTime = NOW()"
+        "WHERE fileId = ? AND userId = ?"
+    );
+
+    //Hvis man bare kunne brukte :downloaded osv..
+    pstmt->setInt(1, left);
+    pstmt->setInt(2, downloaded);
+    pstmt->setInt(3, downloaded);
+    pstmt->setInt(4, downloaded);
+    pstmt->setInt(5, uploaded);
+    pstmt->setInt(6, uploaded);
+    pstmt->setInt(7, uploaded);
+    pstmt->setInt(8, left);
+    pstmt->setInt(9, fileId);
+    pstmt->setInt(10, userId);
+    if (pstmt->executeQuery())
+    {
+        delete pstmt;
+        delete con;
+        return true;
+    }
+    else
+    {
+        delete pstmt;
+        delete con;
+        return createFilesUsers(fileId, userId, downloaded, uploaded, left);
+    }
 }
