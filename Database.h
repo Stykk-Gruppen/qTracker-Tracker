@@ -33,6 +33,7 @@ public:
 	std::vector<Peer*> getPeers(int torrentId);
 	void connect();
 private:
+	std::string urlDecode(std::string);
 	int parseEventString(std::string);
 	int insertAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
 	std::string peerId, int downloaded, int left, int uploaded, std::string torrentPass);

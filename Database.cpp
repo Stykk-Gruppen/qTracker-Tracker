@@ -71,6 +71,16 @@ int Database::parseEventString(std::string event)
 	}
 }
 
+std::string Database::urlDecode(std::string urlEncodedString)
+{
+	//%8E%7C%7C%1Bt%2E%9D%C7%AE%7E%AA9%1CB%7D%19%14a%D6%0C
+	std::string output = "";
+	for(int i=0;i<urlEncodedString.length();i++)
+	{
+		
+	}
+}
+
 //Return Id of Torrent in Database
 int Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
 {
