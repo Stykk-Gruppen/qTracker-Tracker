@@ -114,40 +114,40 @@ int Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
 }
 
 bool Database::insertAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, double downloaded, double left, double uploaded, std::string torrentPass)
+     std::string peerId, int downloaded, int left, int uploaded, std::string torrentPass)
 {
-	int userId = -1;
-	if(getUserId(torrentPass, &userId) && userCanLeech(userId))
-	{
-		connect();
-		sql::PreparedStatement *pstmt;
-		pstmt = con->prepareStatement
-		(
-			"INSERT INTO announceLog (ipa, port, event, infoHash, peerId, downloaded, left, uploaded, userId, modifiedTime) Values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-			);
-		pstmt->setString(1, ipa);
-		pstmt->setInt(2, port);
-		pstmt->setInt(3, event);
-		pstmt->setString(4, infoHash);
-		pstmt->setString(5, peerId);
-		pstmt->setDouble(6, downloaded);
-		pstmt->setDouble(7, left);
-		pstmt->setDouble(8, uploaded);
-		pstmt->setInt(9, userId);
-		if (pstmt->executeQuery())
-		{
-			makeFile(infoHash);
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return false;
-	}
+    int userId = -1;
+    if(getUserId(torrentPass, &userId) && userCanLeech(userId))
+    {
+        connect();
+        sql::PreparedStatement *pstmt;
+        pstmt = con->prepareStatement
+        (
+            "INSERT INTO announceLog (ipa, port, event, infoHash, peerId, downloaded, left, uploaded, userId, modifiedTime) Values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        );
+        pstmt->setString(1, ipa);
+        pstmt->setInt(2, port);
+        pstmt->setInt(3, event);
+        pstmt->setString(4, infoHash);
+        pstmt->setString(5, peerId);
+        pstmt->setInt(6, downloaded);
+        pstmt->setInt(7, left);
+        pstmt->setInt(8, uploaded);
+        pstmt->setInt(9, userId);
+        if (pstmt->executeQuery())
+        {
+            makeFile(infoHash);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
 }
 
 bool Database::makeFile(std::string infoHash)
@@ -238,29 +238,29 @@ bool Database::userCanLeech(int userId)
 }
 
 bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, double downloaded, double left, double uploaded, std::string torrentPass)
+     std::string peerId, int downloaded, int left, int uploaded, std::string torrentPass)
 {
-	connect();
-	sql::PreparedStatement *pstmt;
-	pstmt = con->prepareStatement
-	(
-		"UPDATE announceLog SET event = ?, downloaded = ?, left = ?, uploaded = ?, modifiedTime = NOW() WHERE infoHash = ? AND peerId = ?"
-		);
-	pstmt->setInt(1, event);
-	pstmt->setDouble(2, downloaded);
-	pstmt->setDouble(3, left);
-	pstmt->setDouble(3, uploaded);
-	pstmt->setString(4, infoHash);
-	pstmt->setString(5, peerId); 
-	if (pstmt->executeQuery())
-	{
-		return true;
-	}
-	else
-	{
-		return insertAnnounceLog(ipa, port, event, infoHash,
-			peerId, downloaded, left, uploaded, torrentPass);
-	}
+    connect();
+    sql::PreparedStatement *pstmt;
+    pstmt = con->prepareStatement
+    (
+        "UPDATE announceLog SET event = ?, downloaded = ?, left = ?, uploaded = ?, modifiedTime = NOW() WHERE infoHash = ? AND peerId = ?"
+    );
+    pstmt->setInt(1, event);
+    pstmt->setInt(2, downloaded);
+    pstmt->setInt(3, left);
+    pstmt->setInt(3, uploaded);
+    pstmt->setString(4, infoHash);
+    pstmt->setString(5, peerId); 
+    if (pstmt->executeQuery())
+    {
+        return true;
+    }
+    else
+    {
+        return insertAnnounceLog(ipa, port, event, infoHash,
+         peerId, downloaded, left, uploaded, torrentPass);
+    }
 }
 
 std::vector<Peer*> Database::getPeers(int torrentId)

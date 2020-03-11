@@ -28,13 +28,13 @@ public:
 	int insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
 	Torrent getTorrent(int torrentId);
 	bool updateAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, double downloaded, double left, double uploaded, std::string torrentPass);
+	std::string peerId, int downloaded, int left, int uploaded, std::string torrentPass);
 	int getTorrentId(std::string infoHash);
 	std::vector<Peer*> getPeers(int torrentId);
 	void connect();
 private:
 	bool insertAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, double downloaded, double left, double uploaded, std::string torrentPass);
+	std::string peerId, int downloaded, int left, int uploaded, std::string torrentPass);
 	bool getUserId(std::string torrentPass, int *userId);
 	bool userCanLeech(int userId);
 	bool makeFile(std::string infoHash);
