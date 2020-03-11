@@ -260,12 +260,12 @@ int Database::getTorrentId(std::string infoHash)
         // Connect to the MySQL test database
         con->setSchema(dbDatabaseName);
 
-        pstmt = con->prepareStatement("SELECT id FROM files WHERE infoHash = ?");
+        pstmt = con->prepareStatement("SELECT fileId FROM files WHERE infoHash = ?");
         pstmt->setString(1, infoHash);
         res = pstmt->executeQuery();
         if (res->next())
         {
-            return res->getInt("id");
+            return res->getInt("fileId");
         }
         else
         {
@@ -492,6 +492,7 @@ bool Database::createFilesUsers(int fileId, int userId, int downloaded, int uplo
         pstmt->setInt(3, downloaded);
         pstmt->setInt(4, uploaded);
         pstmt->setInt(5, left);
+        std::cout << pstmt << std::endl;
         return  (pstmt->executeQuery()) ? true : false;
     }
     catch (sql::SQLException &e)
