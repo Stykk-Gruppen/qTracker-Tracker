@@ -26,9 +26,14 @@ public:
 	//Return torrentId from DB.
 	int insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
 	Torrent getTorrent(int torrentId);
-	bool getUserId(std::string torrentPass, int *userId);
+	bool updateAnnounceLog(std::vector<std::string> vector);
+	int getTorrentId(std::string infoHash);
 	void connect();
 private:
+	bool insertAnnounceLog(std::vector<std::string> vector);
+	bool getUserId(std::string torrentPass, std::string *userId);
+	bool userCanLeech(std::string userId);
+	bool makeFile(std::string infoHash);
 	sql::Connection *con;
 };
 
