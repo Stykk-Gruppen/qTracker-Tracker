@@ -206,3 +206,20 @@ bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::stri
          peerId, downloaded, left, uploaded, torrentPass);
     }
 }
+
+std::vector<Peer*> Database::getPeers(int torrentId)
+{
+    std::vector<Peer*> peers;
+    connect();
+    sql::PreparedStatement *pstmt;
+    pstmt = con->prepareStatement("SELECT peerId, ipa, port FROM announceLog AS al, files AS f, filesUsers AS fu WHERE al.infoHash = f.infoHash AND f.fileId = fu.fileId AND fu.isActive = 1 ");
+    sql::ResultSet* res = pstmt->executeQuery();
+    while (res->next())
+    {
+        std::string peerId = res->getString("peerId");
+        std::string ipa = res->getString("ipa");
+        int port = res->getInt("port");
+        peers.push_back(new Peer(peerId, ipa, port));
+    }
+    return peers;
+}
