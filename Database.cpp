@@ -155,32 +155,54 @@ int Database::insertAnnounceLog(std::string ipa, int port, int event, std::strin
 {
 	if(userCanLeech(userId))
 	{
-		connect();
-		sql::PreparedStatement *pstmt;
-		pstmt = con->prepareStatement
-		(
-			"INSERT INTO announceLog (ipa, port, event, infoHash, peerId, downloaded, left, uploaded, userId, modifiedTime) Values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-			);
-		pstmt->setString(1, ipa);
-		pstmt->setInt(2, port);
-		pstmt->setInt(3, event);
-		pstmt->setString(4, infoHash);
-		pstmt->setString(5, peerId);
-		pstmt->setInt(6, downloaded);
-		pstmt->setInt(7, left);
-		pstmt->setInt(8, uploaded);
-		pstmt->setInt(9, userId);
-		if (pstmt->executeQuery())
-		{
-        	//mysql_num_rows(MYSQL_RES *result)
-			createFile(infoHash);
-            createFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		try
+        {
+            sql::Driver *driver;
+            sql::Connection *con;
+            sql::PreparedStatement *pstmt;
+            sql::ResultSet *res;
+
+            // Create a connection
+            driver = get_driver_instance();
+            std::string t = "tcp://";
+            t += dbHostName;
+            t += ":3306";
+            con = driver->connect(t, dbUserName, dbPassword);
+            // Connect to the MySQL test database
+            con->setSchema(dbDatabaseName);
+
+            pstmt = con->prepareStatement
+            (
+            "INSERT INTO announceLog (ipa, port, event, infoHash, peerId, downloaded, `left`, uploaded, userId, modifiedTime) Values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            );
+            pstmt->setString(1, ipa);
+            pstmt->setInt(2, port);
+            pstmt->setInt(3, event);
+            pstmt->setString(4, infoHash);
+            pstmt->setString(5, peerId);
+            pstmt->setInt(6, downloaded);
+            pstmt->setInt(7, left);
+            pstmt->setInt(8, uploaded);
+            pstmt->setInt(9, userId);
+            if (pstmt->executeQuery())
+            {
+                //mysql_num_rows(MYSQL_RES *result)
+                createFile(infoHash);
+                createFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+            
+        }
+        catch (sql::SQLException &e)
+        {
+            std::cout << " (MySQL error code: " << e.getErrorCode();
+            std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+            return false;
+        }
 	}
 	else
 	{
@@ -190,28 +212,71 @@ int Database::insertAnnounceLog(std::string ipa, int port, int event, std::strin
 
 bool Database::createFile(std::string infoHash)
 {
-	connect();
-	sql::PreparedStatement *pstmt;
-	pstmt = con->prepareStatement("INSERT INTO files (infoHash) Values (?)");
-	pstmt->setString(1, infoHash);
-	return (pstmt->executeQuery()) ? true : false;
+    try
+    {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::PreparedStatement *pstmt;
+        sql::ResultSet *res;
+
+        // Create a connection
+        driver = get_driver_instance();
+        std::string t = "tcp://";
+        t += dbHostName;
+        t += ":3306";
+        con = driver->connect(t, dbUserName, dbPassword);
+        // Connect to the MySQL test database
+        con->setSchema(dbDatabaseName);
+
+        pstmt = con->prepareStatement("INSERT INTO files (infoHash) Values (?)");
+        pstmt->setString(1, infoHash);
+        return (pstmt->executeQuery()) ? true : false;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        return false;
+    }
 }
 
 int Database::getTorrentId(std::string infoHash)
 {
-	connect();
-	sql::PreparedStatement *pstmt;
-	pstmt = con->prepareStatement("SELECT id FROM files WHERE infoHash = ?");
-	pstmt->setString(1, infoHash);
-	sql::ResultSet* res = pstmt->executeQuery();
-	if (res->next())
-	{
-		return res->getInt("id");
-	}
-	else
-	{
-		return 0;
-	}
+    try
+    {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::PreparedStatement *pstmt;
+        sql::ResultSet *res;
+
+        // Create a connection
+        driver = get_driver_instance();
+        std::string t = "tcp://";
+        t += dbHostName;
+        t += ":3306";
+        con = driver->connect(t, dbUserName, dbPassword);
+        // Connect to the MySQL test database
+        con->setSchema(dbDatabaseName);
+
+        pstmt = con->prepareStatement("SELECT id FROM files WHERE infoHash = ?");
+        pstmt->setString(1, infoHash);
+        res = pstmt->executeQuery();
+        if (res->next())
+        {
+            return res->getInt("id");
+        }
+        else
+        {
+            std::cout << "Failed to get torrent Id" << std::endl;
+            return 0;
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        return false;
+    }
 }
 
 Torrent Database::getTorrent(int torrentId)
@@ -251,7 +316,6 @@ bool Database::getUserId(std::string torrentPass, int *userId)
         con = driver->connect(t, dbUserName, dbPassword);
         // Connect to the MySQL test database
         con->setSchema(dbDatabaseName);
-
 
     	pstmt = con->prepareStatement("SELECT id FROM user WHERE torrentPass = ?");
     	pstmt->setString(1, torrentPass);
@@ -345,15 +409,15 @@ bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::stri
 
             pstmt = con->prepareStatement
             (
-            "UPDATE announceLog SET event = ?, downloaded = ?, left = ?, uploaded = ?, modifiedTime = NOW() WHERE infoHash = ? AND peerId = ?"
+            "UPDATE announceLog SET event = ?, downloaded = ?, `left` = ?, uploaded = ?, modifiedTime = NOW() WHERE infoHash = ? AND peerId = ?"
             );
             pstmt->setInt(1, event);
             pstmt->setInt(2, downloaded);
             pstmt->setInt(3, left);
-            pstmt->setInt(3, uploaded);
-            pstmt->setString(4, infoHash);
-            pstmt->setString(5, peerId); 
-            if (pstmt->executeQuery())
+            pstmt->setInt(4, uploaded);
+            pstmt->setString(5, infoHash);
+            pstmt->setString(6, peerId); 
+            if (pstmt->execute())
             {
                 std::cout << "Successfully added to announceLog QUERY" << std::endl;
                 updateFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
@@ -399,59 +463,100 @@ std::vector<Peer*> Database::getPeers(int torrentId)
 
 bool Database::createFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left)
 {
-    bool returnBool;
-    connect();
-    sql::PreparedStatement *pstmt;
-    pstmt = con->prepareStatement
-    (
-        "INSERT INTO fileUsers"
-        "(fileId, userId, downloaded, uploaded, left)"
-        "VALUES (?, ?, ?, ?, ?)"
-    );
-    pstmt->setInt(1, fileId);
-    pstmt->setInt(2, userId);
-    pstmt->setInt(3, downloaded);
-    pstmt->setInt(4, uploaded);
-    pstmt->setInt(5, left);
-    return  (pstmt->executeQuery()) ? true : false;
+    try
+    {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::PreparedStatement *pstmt;
+        sql::ResultSet *res;
+
+        // Create a connection
+        driver = get_driver_instance();
+        std::string t = "tcp://";
+        t += dbHostName;
+        t += ":3306";
+        con = driver->connect(t, dbUserName, dbPassword);
+        // Connect to the MySQL test database
+        con->setSchema(dbDatabaseName);
+
+        pstmt = con->prepareStatement
+        (
+            "INSERT INTO fileUsers"
+            "(fileId, userId, downloaded, uploaded, `left`)"
+            "VALUES (?, ?, ?, ?, ?)"
+        );
+        pstmt->setInt(1, fileId);
+        pstmt->setInt(2, userId);
+        pstmt->setInt(3, downloaded);
+        pstmt->setInt(4, uploaded);
+        pstmt->setInt(5, left);
+        return  (pstmt->executeQuery()) ? true : false;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        return false;
+    }
 }
 
 bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left)
 {
-    connect();
-    sql::PreparedStatement *pstmt;
-    pstmt = con->prepareStatement
-    (
-        "UPDATE fileUsers"
-        "SET" 
-        "isActive = 1,"
-        "announced = announced + 1,"
-        "completed = IF(? == 0, 1, 0),"
-        "downloaded = IF(downloaded > ?, downloaded + ?, ?),"
-        "uploaded = IF(uploaded > ?, uploaded + ?, ?),"
-        "left = ?,"
-        "modifiedTime = NOW()"
-        "WHERE fileId = ? AND userId = ?"
-    );
+    try
+    {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::PreparedStatement *pstmt;
+        sql::ResultSet *res;
 
-    //Hvis man bare kunne brukte :downloaded osv..
-    pstmt->setInt(1, left);
-    pstmt->setInt(2, downloaded);
-    pstmt->setInt(3, downloaded);
-    pstmt->setInt(4, downloaded);
-    pstmt->setInt(5, uploaded);
-    pstmt->setInt(6, uploaded);
-    pstmt->setInt(7, uploaded);
-    pstmt->setInt(8, left);
-    pstmt->setInt(9, fileId);
-    pstmt->setInt(10, userId);
-    if (pstmt->executeQuery())
-    {
-        return true;
+        // Create a connection
+        driver = get_driver_instance();
+        std::string t = "tcp://";
+        t += dbHostName;
+        t += ":3306";
+        con = driver->connect(t, dbUserName, dbPassword);
+        // Connect to the MySQL test database
+        con->setSchema(dbDatabaseName);
+
+        pstmt = con->prepareStatement
+        (
+            "UPDATE fileUsers"
+            "SET" 
+            "isActive = 1,"
+            "announced = announced + 1,"
+            "completed = IF(? == 0, 1, 0),"
+            "downloaded = IF(downloaded > ?, downloaded + ?, ?),"
+            "uploaded = IF(uploaded > ?, uploaded + ?, ?),"
+            "`left` = ?,"
+            "modifiedTime = NOW()"
+            "WHERE fileId = ? AND userId = ?"
+        );
+
+        //Hvis man bare kunne brukte :downloaded osv..
+        pstmt->setInt(1, left);
+        pstmt->setInt(2, downloaded);
+        pstmt->setInt(3, downloaded);
+        pstmt->setInt(4, downloaded);
+        pstmt->setInt(5, uploaded);
+        pstmt->setInt(6, uploaded);
+        pstmt->setInt(7, uploaded);
+        pstmt->setInt(8, left);
+        pstmt->setInt(9, fileId);
+        pstmt->setInt(10, userId);
+        if (pstmt->executeQuery())
+        {
+            return true;
+        }
+        else
+        {
+            return createFilesUsers(fileId, userId, downloaded, uploaded, left);
+        } 
     }
-    else
+    catch (sql::SQLException &e)
     {
-        return createFilesUsers(fileId, userId, downloaded, uploaded, left);
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        return false;
     }
 }
 
