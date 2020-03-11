@@ -17,6 +17,7 @@
 #include <vector>
 #include <map>
 #include "bencode.hpp"
+#include "Database.h"
 
 using namespace bencode;
 
@@ -37,9 +38,11 @@ private:
 	struct sockaddr_in cli_addr;
 	static const int buffersize = 4096;
 	char buffer[buffersize];
+	Database* db;
+	int parseAndInsertMessage();
 	std::string getKeyFromURL(std::string);
 	std::string array_to_string(char* arr, int size);
-	std::string buildDictionary();
+	std::string buildDictionary(int torrentId);
 };
 
 #endif

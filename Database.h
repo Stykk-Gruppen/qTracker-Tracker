@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
-
+#include <vector>
 #include "config.cpp"
 
 /*
@@ -22,6 +22,9 @@
 class Database{
 public:
 	Database();
+	//Return torrentId from DB.
+	int insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
+	std::vector<std::string*> getPeersForTorrent(int torrentId);
 };
 
 #endif

@@ -36,3 +36,20 @@ Database::Database()
         cout << ", SQLState: " << e.getSQLState() << " )" << endl;
     }
 }
+
+//Return Id of Torrent in Database
+int Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
+{
+    //insertIntoDB
+
+    return 1;
+}
+
+std::vector<std::string*> Database::getPeersForTorrent(int torrentId)
+{
+    std::vector<std::string*> vectorOfArrays;
+    //Fill from db
+    return vectorOfArrays;
+}
+
+

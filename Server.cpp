@@ -4,6 +4,8 @@ using namespace std;
 
 Server::Server(int _port): port(_port)
 {
+	Database *d = new Database();
+
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	bzero((char*)&serv_addr, sizeof(serv_addr));
 
@@ -26,15 +28,6 @@ void Server::central()
 	while(true)
 	{
 		newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-		//struct sockaddr_in* pV4Addr = (struct sockaddr_in*)&cli_addr;
-		//struct in_addr ipAddr = pV4Addr->sin_addr;
-		printf("IP address is: %s\n", inet_ntoa(cli_addr.sin_addr));
-		printf("port is: %d\n", (int) ntohs(cli_addr.sin_port));
-		//std::cout << cli_addr.sin_addr << "\n";
-		//char str[INET_ADDRSTRLEN];
-		//inet_ntop( AF_INET, &ipAddr, str, INET_ADDRSTRLEN );
-		
-		//std::cout << "IP: " << str << "\n";
 
 		pid = fork();
 		if(pid == 0)
@@ -56,8 +49,96 @@ void Server::handle_client(int newsockfd)
 	bzero(buffer, 4096);
 	read(newsockfd, buffer, 4096);
 
-	//Http h(array_to_string(buffer, 4096));
 	std::cout << array_to_string(buffer, 4096);	
+	int torrentId = parseAndInsertMessage();
+	
+	std::string answer = buildDictionary(torrentId);
+	std::cout << answer << "\n";
+	write(newsockfd, answer.c_str(), strlen(answer.c_str()));
+}
+
+std::string Server::buildDictionary(int torrentId)
+{
+	std::vector<std::string*> vectorOfArrays = db->getPeersForTorrent(torrentId);
+	std::ostringstream stream;
+	bencode::encode(stream, bencode::dict{
+		{"tracker_id", 1},
+		{"peers", bencode::list{
+			bencode::dict{
+				{"peer_id", 1},
+				{"ip", 1},
+				{"port", 1}
+			},
+			bencode::dict{
+				{"peer_id", 1},
+				{"ip", 1},
+				{"port", 1}
+			},
+			bencode::dict{
+				{"peer_id", 1},
+				{"ip", 1},
+				{"port", 1}
+			},
+			bencode::dict{
+				{"peer_id", 1},
+				{"ip", 1},
+				{"port", 1}
+			},
+			bencode::dict{
+				{"peer_id", 1},
+				{"ip", 1},
+				{"port", 1}
+			}
+		}
+	},
+	{"interval", "3"},
+	{"complete", "3"},
+	{"incomplete", "3"}
+	});
+	std::string streamString =  stream.str();
+	std::string answer = "";
+	answer += "HTTP/1.1 200 OK\r\n";
+	answer += "Content-length: ";
+	answer += to_string(strlen(streamString.c_str()));
+	answer += "\r\n";
+	answer += "Content-Type: text/plain\r\n";
+	answer += "Connection: close\r\n";
+	answer += "\r\n";
+	answer += streamString;
+	return answer;
+}
+
+std::string Server::getKeyFromURL(std::string url)
+{
+	std::string key = "";
+	int slashCount = 0;
+	for(int i=0;i<url.length();i++)
+	{
+		if(url[i]=='/')
+		{
+			slashCount++;
+			continue;
+		}
+		if(slashCount == 1)
+		{
+			key+=url[i];
+		}
+	}
+	return key;
+}
+
+std::string Server::array_to_string(char* arr, int size)
+{
+	int i;
+	std::string s = "";
+	for (i = 0; i < size; i++) {
+		s = s + arr[i];
+	}
+	return s;
+}
+
+int Server::parseAndInsertMessage()
+{
 	std::vector<std::string*> vectorOfArrays;
 	std::string keyString = "";
 	std::string valueString = "";
@@ -129,92 +210,14 @@ void Server::handle_client(int newsockfd)
 	{
 		cout << vectorOfArrays.at(x)[0] << "=" << vectorOfArrays.at(x)[1] << endl;
 	}
-	
-	std::ostringstream stream;
-	bencode::encode(stream, bencode::dict{
-		{"tracker_id", 1},
-		{"peers", bencode::list{
-			bencode::dict{
-				{"peer_id", 1},
-				{"ip", 1},
-				{"port", 1}
-			},
-			bencode::dict{
-				{"peer_id", 1},
-				{"ip", 1},
-				{"port", 1}
-			},
-			bencode::dict{
-				{"peer_id", 1},
-				{"ip", 1},
-				{"port", 1}
-			},
-			bencode::dict{
-				{"peer_id", 1},
-				{"ip", 1},
-				{"port", 1}
-			},
-			bencode::dict{
-				{"peer_id", 1},
-				{"ip", 1},
-				{"port", 1}
-			}
-		}
-	},
-	{"interval", "3"},
-	{"complete", "3"},
-	{"incomplete", "3"}
-	});
-	std::string streamString =  stream.str();
-	std::string answer = "";
-	answer += "HTTP/1.1 200 OK\r\n";
-	answer += "Content-length: ";
-	answer += to_string(strlen(streamString.c_str()));
-	answer += "\r\n";
-	answer += "Content-Type: text/plain\r\n";
-	answer += "Connection: close\r\n";
-	answer += "\r\n";
-	answer += streamString;
-	//std::cout << answer << "\n";
-	write(newsockfd, answer.c_str(), strlen(answer.c_str()));
+
+	int torrentId = db->insertClientInfo(vectorOfArrays);
 
 	for(int i = 0; i < vectorOfArrays.size(); i++)
 	{
 		delete[] vectorOfArrays[i];
 	}
-}
 
-std::string Server::buildDictionary()
-{
-	//std::string test = "{}";
-	//std::string encodedString = boost::get<bencode::string>(test);
-}
 
-std::string Server::getKeyFromURL(std::string url)
-{
-	std::string key = "";
-	int slashCount = 0;
-	for(int i=0;i<url.length();i++)
-	{
-		if(url[i]=='/')
-		{
-			slashCount++;
-			continue;
-		}
-		if(slashCount == 1)
-		{
-			key+=url[i];
-		}
-	}
-	return key;
-}
-
-std::string Server::array_to_string(char* arr, int size)
-{
-	int i;
-	std::string s = "";
-	for (i = 0; i < size; i++) {
-		s = s + arr[i];
-	}
-	return s;
+	return torrentId;
 }
