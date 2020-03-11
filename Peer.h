@@ -1,16 +1,16 @@
 #ifndef PEER_H
 #define PEER_H
-
+#include <string>
 
 class Peer
 {
 public:
 	Peer();
-	Peer(int _peer_id, int _ip, int _port);
+	Peer(std::string _peer_id, std::string _ip, std::string _port);
 
-	int peer_id;
-	int ip;
-	int port;
+	std::string peer_id;
+	std::string ip;
+	std::string port;
 };
 
 #endif

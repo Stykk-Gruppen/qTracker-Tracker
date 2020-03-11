@@ -4,7 +4,7 @@
 #include <vector>
 #include "Peer.h"
 
-class Peer;
+
 
 class Torrent
 {
