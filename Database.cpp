@@ -100,52 +100,53 @@ int Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
 	std::string torrentPass;
 	for(size_t x=0;x<vectorOfArrays.size();x++)
 	{
-		if(vectorOfArrays.at(x)[1].compare("ip") == 0)
+		if(vectorOfArrays.at(x)[0].compare("ip") == 0)
 		{
 			ipa = vectorOfArrays.at(x)[1];
 			continue;
 		}
-		if(vectorOfArrays.at(x)[1].compare("port") == 0)
+		if(vectorOfArrays.at(x)[0].compare("port") == 0)
 		{
 			port = stoi(vectorOfArrays.at(x)[1]);
 			continue;
 		}
-		if(vectorOfArrays.at(x)[1].compare("event") == 0)
+		if(vectorOfArrays.at(x)[0].compare("event") == 0)
 		{
 			event = parseEventString(vectorOfArrays.at(x)[1]);
 			continue;
 		}
-		if(vectorOfArrays.at(x)[1].compare("info_hash") == 0)
+		if(vectorOfArrays.at(x)[0].compare("info_hash") == 0)
 		{
 			infoHash = urlDecode(vectorOfArrays.at(x)[1]);
 			continue;
 		}
-		if(vectorOfArrays.at(x)[1].compare("peer_id") == 0)
+		if(vectorOfArrays.at(x)[0].compare("peer_id") == 0)
 		{
 			peerId = urlDecode(vectorOfArrays.at(x)[1]);
 			continue;
 		}
-		if(vectorOfArrays.at(x)[1].compare("downloaded") == 0)
+		if(vectorOfArrays.at(x)[0].compare("downloaded") == 0)
 		{
 			downloaded = stoi(vectorOfArrays.at(x)[1]);
 			continue;
 		}
-		if(vectorOfArrays.at(x)[1].compare("left") == 0)
+		if(vectorOfArrays.at(x)[0].compare("left") == 0)
 		{
 			left = stoi(vectorOfArrays.at(x)[1]);
 			continue;
 		}
-		if(vectorOfArrays.at(x)[1].compare("uploaded") == 0)
+		if(vectorOfArrays.at(x)[0].compare("uploaded") == 0)
 		{
 			uploaded = stoi(vectorOfArrays.at(x)[1]);
 			continue;
 		}
-		if(vectorOfArrays.at(x)[1].compare("urlKey") == 0)
+		if(vectorOfArrays.at(x)[0].compare("urlKey") == 0)
 		{
 			torrentPass = vectorOfArrays.at(x)[1];
 			continue;
 		}
 	}
+    std::cout << torrentPass << std::endl;
 	return updateAnnounceLog(ipa,port,event,infoHash,peerId,downloaded,left,uploaded,torrentPass);
 }
 
@@ -244,11 +245,15 @@ bool Database::getUserId(std::string torrentPass, int *userId)
 	{
 		*userId = res->getInt("id");
         std::cout << "Got user Id" << std::endl;
+        delete pstmt;
+        delete res;
 		return true;
 	}
 	else
 	{
         std::cout << "Couldn't get user Id" << std::endl;
+        delete pstmt;
+        delete res;
 		return false;
 	}
 }
