@@ -118,8 +118,12 @@ void Server::handle_client(int newsockfd)
 	string *urlKeyArray = new string[2];
 	urlKeyArray[0] = "urlKey";
 	urlKeyArray[1] = getKeyFromURL(url);
+	string *ipKeyArray = new string[2];
+	ipKeyArray[0] = "ip";
+	ipKeyArray[1] = inet_ntoa(cli_addr.sin_addr);
 	vectorOfArrays.push_back(urlArray);
 	vectorOfArrays.push_back(urlKeyArray);
+	vectorOfArrays.push_back(ipKeyArray);
 
 	for(size_t x=0;x<vectorOfArrays.size();x++)
 	{
@@ -171,7 +175,13 @@ void Server::handle_client(int newsockfd)
 	answer += "Connection: close\r\n";
 	answer += "\r\n";
 	answer += streamString;
+	//std::cout << answer << "\n";
 	write(newsockfd, answer.c_str(), strlen(answer.c_str()));
+
+	for(int i = 0; i < vectorOfArrays.size(); i++)
+	{
+		delete[] vectorOfArrays[i];
+	}
 }
 
 std::string Server::buildDictionary()
