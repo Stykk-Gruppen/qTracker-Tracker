@@ -44,7 +44,7 @@ private:
 	bool createFile(std::string infoHash);
 	bool updateFile(int fileId);
 	bool createFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left);
-	bool updateFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left);
+	bool updateFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left, int event);
 	std::vector<int> getFiles(std::string infoHash);
 	sql::Connection *con;
 };

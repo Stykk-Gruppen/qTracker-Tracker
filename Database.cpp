@@ -142,11 +142,11 @@ bool Database::updateFile(int fileId)
 int Database::parseEventString(std::string event)
 {
 	boost::algorithm::to_lower(event);
-	if(event.compare("stop") == 0)
+	if(event.compare("stopped") == 0)
 	{
 		return 3;
 	}
-	else if(event.compare("start") == 0)
+	else if(event.compare("started") == 0)
 	{
 		return 2;
 	}
@@ -525,7 +525,7 @@ bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::stri
             if (pstmt->executeUpdate() > 0)
             {
                 std::cout << "Updated announceLog" << std::endl;
-                updateFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
+                updateFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left, event);
                 return true;
             }
             else
@@ -640,7 +640,7 @@ bool Database::createFilesUsers(int fileId, int userId, int downloaded, int uplo
     }
 }
 
-bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left)
+bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left, int event)
 {
     try
     {
@@ -662,7 +662,7 @@ bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uplo
         (
             "UPDATE filesUsers "
             "SET " 
-            "isActive = 1, "
+            "isActive = IF(? BETWEEN 1 AND 2, 1, 0), "
             "announced = announced + 1, "
             "completed = IF(? = 0, 1, 0), "
             "downloaded = IF(downloaded > ?, downloaded + ?, ?), "
@@ -673,16 +673,17 @@ bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uplo
         );
 
         //Hvis man bare kunne brukte :downloaded osv..
-        pstmt->setInt(1, left);
-        pstmt->setInt(2, downloaded);
+        pstmt->setInt(1, event);
+        pstmt->setInt(2, left);
         pstmt->setInt(3, downloaded);
         pstmt->setInt(4, downloaded);
-        pstmt->setInt(5, uploaded);
+        pstmt->setInt(5, downloaded);
         pstmt->setInt(6, uploaded);
         pstmt->setInt(7, uploaded);
-        pstmt->setInt(8, left);
-        pstmt->setInt(9, fileId);
-        pstmt->setInt(10, userId);
+        pstmt->setInt(8, uploaded);
+        pstmt->setInt(9, left);
+        pstmt->setInt(10, fileId);
+        pstmt->setInt(11, userId);
         if (pstmt->executeUpdate() > 0)
         {
             std::cout << "Updated fileUsers" << std::endl;
