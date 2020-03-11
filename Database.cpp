@@ -78,7 +78,15 @@ bool Database::insertAnnounceLog(std::string ipa, int port, int event, std::stri
         pstmt->setDouble(7, left);
         pstmt->setDouble(8, uploaded);
         pstmt->setInt(9, userId);
-        return (pstmt->executeQuery()) ? true : false;
+        if (pstmt->executeQuery())
+        {
+            makeFile(infoHash);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     else
     {
@@ -88,9 +96,11 @@ bool Database::insertAnnounceLog(std::string ipa, int port, int event, std::stri
 
 bool Database::makeFile(std::string infoHash)
 {
-    //Holder på her nå
     connect();
-    return false;
+    sql::PreparedStatement *pstmt;
+    pstmt = con->prepareStatement("INSERT INTO files (infoHash) Values (?)");
+    pstmt->setString(1, infoHash);
+    return (pstmt->executeQuery()) ? true : false;
 }
 
 int Database::getTorrentId(std::string infoHash)
