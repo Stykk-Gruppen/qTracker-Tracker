@@ -282,21 +282,42 @@ bool Database::getUserId(std::string torrentPass, int *userId)
 
 bool Database::userCanLeech(int userId)
 {
-	connect();
-	sql::PreparedStatement *pstmt;
-	pstmt = con->prepareStatement("SELECT canLeech FROM user WHERE id = ?");
-	pstmt->setInt(1, userId);
-	sql::ResultSet* res = pstmt->executeQuery();
-	if (res->next())
-	{
-        std::cout << "User can leech" << std::endl;
-		return (res->getInt("canLeech")) ? true : false;
-	}
-	else
-	{
-        std::cout << "User can't leech" << std::endl;
-		return false;
-	}
+	try
+    {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::PreparedStatement *pstmt;
+        sql::ResultSet *res;
+
+        // Create a connection
+        driver = get_driver_instance();
+        std::string t = "tcp://";
+        t += dbHostName;
+        t += ":3306";
+        con = driver->connect(t, dbUserName, dbPassword);
+        // Connect to the MySQL test database
+        con->setSchema(dbDatabaseName);
+
+        pstmt = con->prepareStatement("SELECT canLeech FROM user WHERE id = ?");
+        pstmt->setInt(1, userId);
+        res = pstmt->executeQuery();
+        if (res->next())
+        {
+            std::cout << "User can leech" << std::endl;
+            return (res->getInt("canLeech")) ? true : false;
+        }
+        else
+        {
+            std::cout << "User can't leech" << std::endl;
+            return false;
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        return false;
+    }
 }
 
 bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
@@ -306,30 +327,52 @@ bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::stri
     int userId = -1;
     if (getUserId(torrentPass, &userId))
     {
-    	connect();
-    	sql::PreparedStatement *pstmt;
-    	pstmt = con->prepareStatement
-    	(
-    		"UPDATE announceLog SET event = ?, downloaded = ?, left = ?, uploaded = ?, modifiedTime = NOW() WHERE infoHash = ? AND peerId = ?"
-    		);
-    	pstmt->setInt(1, event);
-    	pstmt->setInt(2, downloaded);
-    	pstmt->setInt(3, left);
-    	pstmt->setInt(3, uploaded);
-    	pstmt->setString(4, infoHash);
-    	pstmt->setString(5, peerId); 
-    	if (pstmt->executeQuery())
-    	{
-            std::cout << "Successfully added to announceLog QUERY" << std::endl;
-            updateFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
-    		return true;
-    	}
-    	else
-    	{
-            std::cout << "Failed to add to announceLog QUERY" << std::endl;
-    		return insertAnnounceLog(ipa, port, event, infoHash,
-    			peerId, downloaded, left, uploaded, userId);
-    	}
+    	try
+        {
+            sql::Driver *driver;
+            sql::Connection *con;
+            sql::PreparedStatement *pstmt;
+            sql::ResultSet *res;
+
+            // Create a connection
+            driver = get_driver_instance();
+            std::string t = "tcp://";
+            t += dbHostName;
+            t += ":3306";
+            con = driver->connect(t, dbUserName, dbPassword);
+            // Connect to the MySQL test database
+            con->setSchema(dbDatabaseName);
+
+            pstmt = con->prepareStatement
+            (
+            "UPDATE announceLog SET event = ?, downloaded = ?, left = ?, uploaded = ?, modifiedTime = NOW() WHERE infoHash = ? AND peerId = ?"
+            );
+            pstmt->setInt(1, event);
+            pstmt->setInt(2, downloaded);
+            pstmt->setInt(3, left);
+            pstmt->setInt(3, uploaded);
+            pstmt->setString(4, infoHash);
+            pstmt->setString(5, peerId); 
+            if (pstmt->executeQuery())
+            {
+                std::cout << "Successfully added to announceLog QUERY" << std::endl;
+                updateFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
+                return true;
+            }
+            else
+            {
+                std::cout << "Failed to add to announceLog QUERY" << std::endl;
+                return insertAnnounceLog(ipa, port, event, infoHash,
+                    peerId, downloaded, left, uploaded, userId);
+            }
+        }
+        catch (sql::SQLException &e)
+        {
+            std::cout << " (MySQL error code: " << e.getErrorCode();
+            std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+            return false;
+        }
+	
     }
     else
     {
@@ -411,3 +454,4 @@ bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uplo
         return createFilesUsers(fileId, userId, downloaded, uploaded, left);
     }
 }
+
