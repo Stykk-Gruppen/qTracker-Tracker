@@ -50,6 +50,91 @@ void Database::connect()
 	con->setSchema(dbDatabaseName);
 }
 
+std::vector<int> Database::getFiles(std::string infoHash)
+{
+    std::vector<int> vector;
+    try
+    {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::PreparedStatement *pstmt;
+        sql::ResultSet *res;
+
+        // Create a connection
+        driver = get_driver_instance();
+        std::string t = "tcp://";
+        t += dbHostName;
+        t += ":3306";
+        con = driver->connect(t, dbUserName, dbPassword);
+        // Connect to the MySQL test database
+        con->setSchema(dbDatabaseName);
+
+        pstmt = con->prepareStatement("SELECT fileId, leechers, seeders FROM files WHERE infoHash = ?");
+        pstmt->setString(1, infoHash);
+        res = pstmt->executeQuery();
+        while (res->next())
+        {
+            int fileId = res->getInt("fileId");
+            int leechers = res->getInt("leechers");
+            int seeders = res->getInt("seeders");
+            vector.push_back(fileId);
+            vector.push_back(leechers);
+            vector.push_back(seeders);
+        }
+        return vector;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        return vector;
+    }
+}
+
+bool Database::updateFile(int fileId)
+{
+    try
+    {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::PreparedStatement *pstmt;
+        sql::ResultSet *res;
+
+        // Create a connection
+        driver = get_driver_instance();
+        std::string t = "tcp://";
+        t += dbHostName;
+        t += ":3306";
+        con = driver->connect(t, dbUserName, dbPassword);
+        // Connect to the MySQL test database
+        con->setSchema(dbDatabaseName);
+
+        pstmt = con->prepareStatement
+        (
+            "UPDATE files "
+            "SET "
+            "seeders = (SELECT COUNT(isActive) FROM filesUsers), "
+            "leechers = (SELECT COUNT(isActive) FROM filesUsers WHERE completed = 0) "
+            "WHERE fileId = ?;"
+        );
+        pstmt->setInt(1, fileId);
+        if (pstmt->executeUpdate() > 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        return false;
+    }
+}
+
 int Database::parseEventString(std::string event)
 {
 	boost::algorithm::to_lower(event);
@@ -86,8 +171,8 @@ std::string Database::urlDecode(std::string urlEncodedString)
 	return output;
 }
 
-//Return Id of Torrent in Database
-int Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
+//Return infoHash if completed
+std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
 {
 	std::string ipa;
 	int port;
@@ -147,7 +232,15 @@ int Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
 		}
 	}
     std::cout << torrentPass << std::endl;
-	return updateAnnounceLog(ipa,port,event,infoHash,peerId,downloaded,left,uploaded,torrentPass);
+    if (updateAnnounceLog(ipa,port,event,infoHash,peerId,downloaded,left,uploaded,torrentPass))
+    {
+        return infoHash;
+    }
+    else
+    {
+        return NULL;
+    }
+	
 }
 
 int Database::insertAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
@@ -281,22 +374,21 @@ int Database::getTorrentId(std::string infoHash)
     }
 }
 
-Torrent Database::getTorrent(int torrentId)
+Torrent Database::getTorrent(std::string infoHash)
 {
     //Get torrent and its peers from db, by torrentId
+    std::vector<int> torrentData = getFiles(infoHash);
 
-    Torrent t(/*TrackerId*/1, /*seeders*/1, /*leechers*/1);
-    /*for(int i = 0; i < 3; i++)
-    {
-        Peer p(i,i,i);
-        t.peers.push_back(p);
-    }*/
+    Torrent t(/*TrackerId*/1, /*seeders*/torrentData[1], /*leechers*/torrentData[2]);
 
+    t.peers = getPeers(torrentData[0]);
+    /*
     //Lagt til for test. Må selvfølgelig loope gjennom db.
 	Peer p1("-lt0D60-B8048EED9AE36nF2073D1", "5.79.98.209", 59130);
 	t.peers.push_back(p1);
 	Peer p2("-qB4170-f7j06WXZAX-I", "79.160.58.120", 8999);
 	t.peers.push_back(p2);
+    */
 
 	return t;
 }
@@ -438,6 +530,7 @@ bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::stri
             std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
             return false;
         }
+
 	
     }
     else
@@ -446,21 +539,43 @@ bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::stri
     }
 }
 
-std::vector<Peer*> Database::getPeers(int torrentId)
+std::vector<Peer*> Database::getPeers(int fileId)
 {
 	std::vector<Peer*> peers;
-	connect();
-	sql::PreparedStatement *pstmt;
-	pstmt = con->prepareStatement("SELECT peerId, ipa, port FROM announceLog AS al, files AS f, filesUsers AS fu WHERE al.infoHash = f.infoHash AND f.fileId = fu.fileId AND fu.isActive = 1 ");
-	sql::ResultSet* res = pstmt->executeQuery();
-	while (res->next())
-	{
-		std::string peerId = res->getString("peerId");
-		std::string ipa = res->getString("ipa");
-		int port = res->getInt("port");
-		peers.push_back(new Peer(peerId, ipa, port));
-	}
-	return peers;
+	try
+    {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::PreparedStatement *pstmt;
+        sql::ResultSet *res;
+
+        // Create a connection
+        driver = get_driver_instance();
+        std::string t = "tcp://";
+        t += dbHostName;
+        t += ":3306";
+        con = driver->connect(t, dbUserName, dbPassword);
+        // Connect to the MySQL test database
+        con->setSchema(dbDatabaseName);
+
+        pstmt = con->prepareStatement("SELECT peerId, ipa, port FROM announceLog AS al, files AS f, filesUsers AS fu WHERE al.infoHash = f.infoHash AND f.fileId = fu.fileId AND fu.isActive = 1 AND f.fileId = ?");
+        pstmt->setInt(1, fileId);
+        res = pstmt->executeQuery();
+        while (res->next())
+        {
+            std::string peerId = res->getString("peerId");
+            std::string ipa = res->getString("ipa");
+            int port = res->getInt("port");
+            peers.push_back(new Peer(peerId, ipa, port));
+        }
+        return peers;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        return peers;
+    }
 }
 
 bool Database::createFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left)
@@ -493,7 +608,15 @@ bool Database::createFilesUsers(int fileId, int userId, int downloaded, int uplo
         pstmt->setInt(4, uploaded);
         pstmt->setInt(5, left);
         std::cout << pstmt << std::endl;
-        return  (pstmt->executeQuery()) ? true : false;
+        if( pstmt->executeQuery())
+        {
+            updateFile(fileId);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     catch (sql::SQLException &e)
     {
@@ -548,6 +671,7 @@ bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uplo
         pstmt->setInt(10, userId);
         if (pstmt->executeUpdate() > 0)
         {
+            updateFile(fileId);
             return true;
         }
         else
