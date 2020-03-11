@@ -572,7 +572,7 @@ std::vector<Peer*> Database::getPeers(int fileId)
         // Connect to the MySQL test database
         con->setSchema(dbDatabaseName);
 
-        pstmt = con->prepareStatement("SELECT peerId, ipa, port FROM announceLog AS al, files AS f, filesUsers AS fu WHERE al.infoHash = f.infoHash AND f.fileId = fu.fileId AND fu.isActive = 1 AND f.fileId = ?");
+        pstmt = con->prepareStatement("SELECT DISTINCT(peerId), ipa, port FROM announceLog AS al, files AS f, filesUsers AS fu WHERE al.infoHash = f.infoHash AND f.fileId = fu.fileId AND fu.isActive = 1 AND f.fileId = ?");
         pstmt->setInt(1, fileId);
         res = pstmt->executeQuery();
         while (res->next())
