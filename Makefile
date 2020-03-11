@@ -5,7 +5,7 @@ LDFLAGS = -lmysqlcppconn
 LINUXUSER = qTracker
 LINUXFOLDER = cpp
 
-OBJS = main.o Server.o Database.o
+OBJS = main.o Server.o Database.o Torrent.o Peer.o
 
 all: $(PROG) .depend
 

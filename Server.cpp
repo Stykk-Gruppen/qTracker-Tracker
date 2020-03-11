@@ -59,7 +59,7 @@ void Server::handle_client(int newsockfd)
 
 std::string Server::buildDictionary(int torrentId)
 {
-	std::vector<std::string*> vectorOfArrays = db->getPeersForTorrent(torrentId);
+	Torrent t = db->getTorrent(torrentId);
 	std::ostringstream stream;
 	bencode::encode(stream, bencode::dict{
 		{"tracker_id", 1},

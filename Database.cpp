@@ -41,15 +41,14 @@ Database::Database()
 int Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
 {
     //insertIntoDB
-
     return 1;
 }
 
-std::vector<std::string*> Database::getPeersForTorrent(int torrentId)
+Torrent Database::getTorrent(int torrentId)
 {
-    std::vector<std::string*> vectorOfArrays;
-    //Fill from db
-    return vectorOfArrays;
+    Torrent t;
+
+    return t;
 }
 
 
