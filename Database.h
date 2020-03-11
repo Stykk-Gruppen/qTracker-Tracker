@@ -13,11 +13,11 @@
   (and mysql_connection.h). This will reduce your build time!
 */
 #include "mysql_connection.h"
-
 #include <cppconn/driver.h>
 #include <cppconn/exception.h>
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
+#include <cppconn/prepared_statement.h>
 
 class Database{
 public:
@@ -25,6 +25,10 @@ public:
 	//Return torrentId from DB.
 	int insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
 	std::vector<std::string*> getPeersForTorrent(int torrentId);
+	bool getUserId(std::string torrentPass, int *userId);
+	void connect();
+private:
+	sql::Connection *con;
 };
 
 #endif
