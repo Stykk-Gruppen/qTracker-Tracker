@@ -73,11 +73,10 @@ std::string Server::buildDictionary(int torrentId)
 	std::ostringstream stream;
 	bencode::encode(stream, bencode::dict{
 		{"tracker_id", t.trackerId},
-		{"peers", peers
-	},
-	{"interval", "3"},
-	{"complete", "3"},
-	{"incomplete", "3"}
+		{"interval", 3},
+		{"complete", 1},
+		{"incomplete", 1},
+		{"peers", peers}
 	});
 
 	/*bencode::encode(stream, bencode::dict{
