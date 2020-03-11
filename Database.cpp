@@ -665,7 +665,7 @@ bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uplo
         (
             "UPDATE filesUsers "
             "SET " 
-            "isActive = IF(? BETWEEN 1 AND 2, 1, 0), "
+            "isActive = IF(? BETWEEN 1 AND 2, 0, 0), "
             "announced = announced + 1, "
             "completed = IF(? = 0, 1, 0), "
             "downloaded = IF(downloaded > ?, downloaded + ?, ?), "
