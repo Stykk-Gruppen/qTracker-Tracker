@@ -10,8 +10,11 @@ class Torrent
 {
 public:
 	Torrent();
-
+	Torrent(int _trackerId, int _seeders, int _leechers);
 	int trackerId;
+	int seeders;
+	int leechers;
+	int interval = 3;
 	std::vector<Peer> peers;
 };
 

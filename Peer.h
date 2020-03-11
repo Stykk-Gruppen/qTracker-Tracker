@@ -6,11 +6,11 @@ class Peer
 {
 public:
 	Peer();
-	Peer(std::string _peer_id, std::string _ip, std::string _port);
+	Peer(std::string _peer_id, std::string _ip, int _port);
 
 	std::string peer_id;
 	std::string ip;
-	std::string port;
+	int port;
 };
 
 #endif
