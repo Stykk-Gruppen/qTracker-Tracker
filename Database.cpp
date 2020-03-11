@@ -236,26 +236,48 @@ Torrent Database::getTorrent(int torrentId)
 
 bool Database::getUserId(std::string torrentPass, int *userId)
 {
-	connect();
-	sql::PreparedStatement *pstmt;
-	pstmt = con->prepareStatement("SELECT id FROM user WHERE torrentPass = ?");
-	pstmt->setString(1, torrentPass);
-	sql::ResultSet* res = pstmt->executeQuery();
-	if (res->next())
-	{
-		*userId = res->getInt("id");
-        std::cout << "Got user Id" << std::endl;
-        delete pstmt;
-        delete res;
-		return true;
-	}
-	else
-	{
-        std::cout << "Couldn't get user Id" << std::endl;
-        delete pstmt;
-        delete res;
-		return false;
-	}
+	try
+    {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::PreparedStatement *pstmt;
+        sql::ResultSet *res;
+
+        // Create a connection
+        driver = get_driver_instance();
+        std::string t = "tcp://";
+        t += dbHostName;
+        t += ":3306";
+        con = driver->connect(t, dbUserName, dbPassword);
+        // Connect to the MySQL test database
+        con->setSchema(dbDatabaseName);
+
+
+    	pstmt = con->prepareStatement("SELECT id FROM user WHERE torrentPass = ?");
+    	pstmt->setString(1, torrentPass);
+    	res = pstmt->executeQuery();
+    	if (res->next())
+    	{
+    		*userId = res->getInt("id");
+            std::cout << "Got user Id" << std::endl;
+            delete pstmt;
+            delete res;
+    		return true;
+    	}
+    	else
+    	{
+            std::cout << "Couldn't get user Id" << std::endl;
+            delete pstmt;
+            delete res;
+    		return false;
+    	}
+    }
+    catch (sql::SQLException &e) {
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        return false;
+    }
+
 }
 
 bool Database::userCanLeech(int userId)
