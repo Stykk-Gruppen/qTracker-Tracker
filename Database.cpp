@@ -523,11 +523,11 @@ bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uplo
 
         pstmt = con->prepareStatement
         (
-            "UPDATE fileUsers "
+            "UPDATE filesUsers "
             "SET " 
             "isActive = 1, "
             "announced = announced + 1, "
-            "completed = IF(? == 0, 1, 0), "
+            "completed = IF(? = 0, 1, 0), "
             "downloaded = IF(downloaded > ?, downloaded + ?, ?), "
             "uploaded = IF(uploaded > ?, uploaded + ?, ?), "
             "`left` = ?, "
