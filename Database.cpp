@@ -173,7 +173,7 @@ int Database::insertAnnounceLog(std::string ipa, int port, int event, std::strin
 
             pstmt = con->prepareStatement
             (
-            "INSERT INTO announceLog (ipa, port, event, infoHash, peerId, downloaded, `left`, uploaded, userId, modifiedTime) Values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO announceLog (ipa, port, event, infoHash, peerId, downloaded, `left`, uploaded, userId, modifiedTime) Values (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())"
             );
             pstmt->setString(1, ipa);
             pstmt->setInt(2, port);
@@ -187,12 +187,14 @@ int Database::insertAnnounceLog(std::string ipa, int port, int event, std::strin
             if (pstmt->executeQuery())
             {
                 //mysql_num_rows(MYSQL_RES *result)
+                std::cout << "Successfully added announceLog WOOHOO" << std::endl;
                 createFile(infoHash);
                 createFilesUsers(getTorrentId(infoHash), userId, downloaded, uploaded, left);
                 return true;
             }
             else
             {
+                std::cout << "Failed to add announceLog RIP" << std::endl;
                 return false;
             }
             
