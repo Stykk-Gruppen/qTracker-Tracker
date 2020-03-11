@@ -8,6 +8,8 @@
 #include "config.cpp"
 #include "Torrent.h"
 
+#include <boost/algorithm/string.hpp>
+
 /*
   Include directly the different
   headers from cppconn/ and mysql_driver.h + mysql_util.h

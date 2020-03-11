@@ -52,7 +52,7 @@ void Database::connect()
 
 int Database::parseEventString(std::string event)
 {
-	event = boost::to_lower(event);
+	boost::algorithm::to_lower(event);
 	if(event.compare("stop") == 0)
 	{
 		return 3;
@@ -67,7 +67,7 @@ int Database::parseEventString(std::string event)
 	} 
 	else
 	{
-		return 0
+		return 0;
 	}
 }
 
