@@ -114,11 +114,15 @@ bool Database::updateFile(int fileId)
         (
             "UPDATE files "
             "SET "
-            "seeders = (SELECT COUNT(isActive) FROM filesUsers), "
-            "leechers = (SELECT COUNT(isActive) FROM filesUsers WHERE completed = 0) "
+            "seeders = (SELECT COUNT(isActive) FROM filesUsers WHERE fileId = ?), "
+            "leechers = (SELECT COUNT(isActive) FROM filesUsers WHERE completed = 0AND fileId = ?) "
+            "completed = (SELECT COUNT(completed) FROM fileUsers WHERE fileId = ?"
             "WHERE fileId = ?;"
         );
         pstmt->setInt(1, fileId);
+        pstmt->setInt(2, fileId);
+        pstmt->setInt(3, fileId);
+        pstmt->setInt(4, fileId);
         if (pstmt->executeUpdate() > 0)
         {
             std::cout << "Updated file" << std::endl;
