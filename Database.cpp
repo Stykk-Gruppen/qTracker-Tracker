@@ -48,14 +48,16 @@ int Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
 
 Torrent Database::getTorrent(int torrentId)
 {
-    Torrent t;
-    t.trackerId = 1;
+    //Get torrent and its peers from db, by torrentId
+
+    Torrent t(/*TrackerId*/1, /*seeders*/1, /*leechers*/1);
     /*for(int i = 0; i < 3; i++)
     {
         Peer p(i,i,i);
         t.peers.push_back(p);
     }*/
-
+    
+    //Lagt til for test. Må selvfølgelig loope gjennom db.
     Peer p1("-lt0D60-B8048EED9AE36nF2073D1", "5.79.98.209", 59130);
     t.peers.push_back(p1);
     Peer p2("-qB4170-f7j06WXZAX-I", "79.160.58.120", 8999);
