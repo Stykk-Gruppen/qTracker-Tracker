@@ -337,7 +337,7 @@ bool Database::createFilesUsers(int fileId, int userId, int downloaded, int uplo
     pstmt->setInt(3, downloaded);
     pstmt->setInt(4, uploaded);
     pstmt->setInt(5, left);
-    returnBool = (pstmt->executeQuery()) ? true : false;
+    return  (pstmt->executeQuery()) ? true : false;
 }
 
 bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left)
