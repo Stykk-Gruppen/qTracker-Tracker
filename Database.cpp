@@ -249,9 +249,6 @@ bool Database::getUserId(std::string torrentPass, int *userId)
 	{
 		return false;
 	}
-	delete res;
-	delete pstmt;
-	delete con;
 }
 
 bool Database::userCanLeech(int userId)
@@ -269,14 +266,12 @@ bool Database::userCanLeech(int userId)
 	{
 		return false;
 	}
-	delete res;
-	delete pstmt;
-	delete con;
 }
 
 bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
 	std::string peerId, int downloaded, int left, int uploaded, std::string torrentPass)
 {
+    std::cout << "Inside updateAnnounceLog" << std::endl;
     int userId = -1;
     if (getUserId(torrentPass, &userId))
     {
@@ -343,9 +338,6 @@ bool Database::createFilesUsers(int fileId, int userId, int downloaded, int uplo
     pstmt->setInt(4, uploaded);
     pstmt->setInt(5, left);
     returnBool = (pstmt->executeQuery()) ? true : false;
-    delete pstmt;
-    delete con;
-    return returnBool;
 }
 
 bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left)
@@ -379,14 +371,10 @@ bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uplo
     pstmt->setInt(10, userId);
     if (pstmt->executeQuery())
     {
-        delete pstmt;
-        delete con;
         return true;
     }
     else
     {
-        delete pstmt;
-        delete con;
         return createFilesUsers(fileId, userId, downloaded, uploaded, left);
     }
 }
