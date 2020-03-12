@@ -665,6 +665,7 @@ bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uplo
         (
             "UPDATE filesUsers "
             "SET " 
+            "timeSeeded = IF(isActive = 1, timeSeeded + TIMESTAMPDIFF(MINUTE, modifiedTime, NOW()), timeSeeded), "
             "isActive = IF(? < 3, 1, 0), "
             "announced = announced + 1, "
             "completed = IF(? = 0, 1, 0), "
