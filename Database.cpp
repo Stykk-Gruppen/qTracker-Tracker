@@ -116,7 +116,8 @@ bool Database::updateFile(int fileId)
             "SET "
             "seeders = (SELECT DISTINCT COUNT(isActive) FROM filesUsers WHERE fileId = ?), "
             "leechers = (SELECT DISTINCT COUNT(isActive) FROM filesUsers WHERE completed = 0 AND fileId = ?), "
-            "completed = (SELECT SUM(IF(completed = 1, 1, 0)) FROM filesUsers WHERE fileId = ?) "
+            "completed = (SELECT SUM(IF(completed = 1, 1, 0)) FROM filesUsers WHERE fileId = ?), "
+            "modifiedTime = NOW() "
             "WHERE fileId = ?;"
         );
         pstmt->setInt(1, fileId);
@@ -130,7 +131,7 @@ bool Database::updateFile(int fileId)
         }
         else
         {
-            std::cout << "Failed to update file" << std::endl;
+            std::cout << "Failed to update file. Perhaps nothing to update." << std::endl;
             return false;
         }
     }
@@ -335,7 +336,16 @@ bool Database::createFile(std::string infoHash)
 
         pstmt = con->prepareStatement("INSERT INTO files (infoHash) Values (?)");
         pstmt->setString(1, infoHash);
-        return (pstmt->executeQuery()) ? true : false;
+        if (pstmt->executeQuery())
+        {
+            std::cout << "Created new Torrent file" << std::endl;
+            return true;
+        }
+        else
+        {
+            std::cout << "Failed to create new Torrent file" << std::endl;
+            return false;
+        }
     }
     catch (sql::SQLException &e)
     {
