@@ -131,6 +131,7 @@ bool Database::updateFile(int fileId)
         }
         else
         {
+
             std::cout << "Failed to update file. Perhaps nothing to update." << std::endl;
             return false;
         }
@@ -207,9 +208,9 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 		}
 		if(vectorOfArrays.at(x)[0].compare("event") == 0)
 		{
-             std::cout << "event = " << vectorOfArrays.at(x)[1];
+      std::cout << "event = " << vectorOfArrays.at(x)[1];
 			event = parseEventString(vectorOfArrays.at(x)[1]);
-            std::cout << " (" << event << ")" << std::endl;
+      std::cout << " (" << event << ")" << std::endl;
 			continue;
 		}
 		if(vectorOfArrays.at(x)[0].compare("info_hash") == 0)
@@ -334,7 +335,7 @@ bool Database::createFile(std::string infoHash)
         con = driver->connect(t, dbUserName, dbPassword);
         // Connect to the MySQL test database
         con->setSchema(dbDatabaseName);
-
+      
         pstmt = con->prepareStatement("INSERT IGNORE INTO files (infoHash) Values (?)");
         pstmt->setString(1, infoHash);
         if (pstmt->executeQuery())
