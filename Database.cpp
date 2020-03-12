@@ -440,14 +440,14 @@ bool Database::getUserId(std::string torrentPass, int *userId)
     	if (res->next())
     	{
     		*userId = res->getInt("id");
-            std::cout << "Got user Id" << std::endl;
+            std::cout << "Valid User ID" << std::endl;
             delete pstmt;
             delete res;
     		return true;
     	}
     	else
     	{
-            std::cout << "Couldn't get user Id" << std::endl;
+            std::cout << "Invalid User ID" << std::endl;
             delete pstmt;
             delete res;
     		return false;
