@@ -633,7 +633,6 @@ bool Database::createFilesUsers(int fileId, int userId, int64_t downloaded, int6
         pstmt->setUInt64(3, downloaded);
         pstmt->setUInt64(4, uploaded);
         pstmt->setUInt64(5, left);
-        std::cout << pstmt << std::endl;
         if( pstmt->executeQuery())
         {
             updateFile(fileId);
