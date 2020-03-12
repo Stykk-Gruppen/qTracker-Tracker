@@ -190,9 +190,9 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 	int event;
 	std::string infoHash;
 	std::string peerId;
-	long downloaded;
-	long left;
-	long uploaded;
+	std::string downloaded;
+	std::string left;
+	std::string uploaded;
 	std::string torrentPass;
 	for(size_t x=0;x<vectorOfArrays.size();x++)
 	{
@@ -257,7 +257,7 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 }
 
 int Database::insertAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, long downloaded, long left, long uploaded, int userId)
+	std::string peerId, std::string downloaded, std::string left, std::string uploaded, int userId)
 {
 	if(userCanLeech(userId))
 	{
@@ -286,9 +286,9 @@ int Database::insertAnnounceLog(std::string ipa, int port, int event, std::strin
             pstmt->setInt(3, event);
             pstmt->setString(4, infoHash);
             pstmt->setString(5, peerId);
-            pstmt->setInt(6, downloaded);
-            pstmt->setInt(7, left);
-            pstmt->setInt(8, uploaded);
+            pstmt->setString(6, downloaded);
+            pstmt->setString(7, left);
+            pstmt->setString(8, uploaded);
             pstmt->setInt(9, userId);
             if (pstmt->executeQuery())
             {
@@ -506,7 +506,7 @@ bool Database::userCanLeech(int userId)
 }
 
 bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, long downloaded, long left, long uploaded, std::string torrentPass)
+	std::string peerId, std::string downloaded, std::string left, std::string uploaded, std::string torrentPass)
 {
     int userId = -1;
     if (getUserId(torrentPass, &userId))
@@ -532,9 +532,9 @@ bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::stri
             "UPDATE announceLog SET event = ?, downloaded = ?, `left` = ?, uploaded = ?, modifiedTime = NOW() WHERE infoHash = ? AND peerId = ?"
             );
             pstmt->setInt(1, event);
-            pstmt->setInt(2, downloaded);
-            pstmt->setInt(3, left);
-            pstmt->setInt(4, uploaded);
+            pstmt->setString(2, downloaded);
+            pstmt->setString(3, left);
+            pstmt->setString(4, uploaded);
             pstmt->setString(5, infoHash);
             pstmt->setString(6, peerId); 
             if (pstmt->executeUpdate() > 0)
@@ -604,7 +604,7 @@ std::vector<Peer*> Database::getPeers(int fileId)
     }
 }
 
-bool Database::createFilesUsers(int fileId, int userId, long downloaded, long uploaded, long left)
+bool Database::createFilesUsers(int fileId, int userId, std::string downloaded, std::string uploaded, std::string left)
 {
     try
     {
@@ -630,9 +630,9 @@ bool Database::createFilesUsers(int fileId, int userId, long downloaded, long up
         );
         pstmt->setInt(1, fileId);
         pstmt->setInt(2, userId);
-        pstmt->setInt(3, downloaded);
-        pstmt->setInt(4, uploaded);
-        pstmt->setInt(5, left);
+        pstmt->setString(3, downloaded);
+        pstmt->setString(4, uploaded);
+        pstmt->setString(5, left);
         std::cout << pstmt << std::endl;
         if( pstmt->executeQuery())
         {
@@ -655,7 +655,7 @@ bool Database::createFilesUsers(int fileId, int userId, long downloaded, long up
     }
 }
 
-bool Database::updateFilesUsers(int fileId, int userId, long downloaded, long uploaded, long left, int event)
+bool Database::updateFilesUsers(int fileId, int userId, std::string downloaded, std::string uploaded, std::string left, int event)
 {
     try
     {
@@ -690,14 +690,14 @@ bool Database::updateFilesUsers(int fileId, int userId, long downloaded, long up
 
         //Hvis man bare kunne brukte :downloaded osv..
         pstmt->setInt(1, event);
-        pstmt->setInt(2, left);
-        pstmt->setInt(3, downloaded);
-        pstmt->setInt(4, downloaded);
-        pstmt->setInt(5, downloaded);
-        pstmt->setInt(6, uploaded);
-        pstmt->setInt(7, uploaded);
-        pstmt->setInt(8, uploaded);
-        pstmt->setInt(9, left);
+        pstmt->setString(2, left);
+        pstmt->setString(3, downloaded);
+        pstmt->setString(4, downloaded);
+        pstmt->setString(5, downloaded);
+        pstmt->setString(6, uploaded);
+        pstmt->setString(7, uploaded);
+        pstmt->setString(8, uploaded);
+        pstmt->setString(9, left);
         pstmt->setInt(10, fileId);
         pstmt->setInt(11, userId);
         if (pstmt->executeUpdate() > 0)
