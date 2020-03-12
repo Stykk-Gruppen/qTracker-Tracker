@@ -116,7 +116,8 @@ bool Database::updateFile(int fileId)
             "SET "
             "seeders = (SELECT DISTINCT COUNT(isActive) FROM filesUsers WHERE fileId = ?), "
             "leechers = (SELECT DISTINCT COUNT(isActive) FROM filesUsers WHERE completed = 0 AND fileId = ?), "
-            "completed = (SELECT SUM(IF(completed = 1, 1, 0)) FROM filesUsers WHERE fileId = ?) "
+            "completed = (SELECT SUM(IF(completed = 1, 1, 0)) FROM filesUsers WHERE fileId = ?), "
+            "modifiedTime = NOW() "
             "WHERE fileId = ?;"
         );
         pstmt->setInt(1, fileId);
@@ -130,7 +131,8 @@ bool Database::updateFile(int fileId)
         }
         else
         {
-            std::cout << "Failed to update file" << std::endl;
+
+            std::cout << "Failed to update file. Perhaps nothing to update." << std::endl;
             return false;
         }
     }
@@ -160,6 +162,7 @@ int Database::parseEventString(std::string event)
 	} 
 	else
 	{
+        std::cout << "event = Bump (0)" << std::endl;
 		return 0;
 	}
 }
@@ -205,9 +208,9 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 		}
 		if(vectorOfArrays.at(x)[0].compare("event") == 0)
 		{
-             std::cout << "event before: " << vectorOfArrays.at(x)[1] << std::endl;
+      std::cout << "event = " << vectorOfArrays.at(x)[1];
 			event = parseEventString(vectorOfArrays.at(x)[1]);
-            std::cout << "event: " << event << std::endl;
+      std::cout << " (" << event << ")" << std::endl;
 			continue;
 		}
 		if(vectorOfArrays.at(x)[0].compare("info_hash") == 0)
@@ -332,10 +335,19 @@ bool Database::createFile(std::string infoHash)
         con = driver->connect(t, dbUserName, dbPassword);
         // Connect to the MySQL test database
         con->setSchema(dbDatabaseName);
-
-        pstmt = con->prepareStatement("INSERT INTO files (infoHash) Values (?)");
+      
+        pstmt = con->prepareStatement("INSERT IGNORE INTO files (infoHash) Values (?)");
         pstmt->setString(1, infoHash);
-        return (pstmt->executeQuery()) ? true : false;
+        if (pstmt->executeQuery())
+        {
+            std::cout << "Created new Torrent file" << std::endl;
+            return true;
+        }
+        else
+        {
+            std::cout << "Failed to create new Torrent file" << std::endl;
+            return false;
+        }
     }
     catch (sql::SQLException &e)
     {
@@ -665,6 +677,7 @@ bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uplo
         (
             "UPDATE filesUsers "
             "SET " 
+            "timeSeeded = IF(isActive = 1, timeSeeded + TIMESTAMPDIFF(MINUTE, modifiedTime, NOW()), timeSeeded), "
             "isActive = IF(? < 3, 1, 0), "
             "announced = announced + 1, "
             "completed = IF(? = 0, 1, 0), "

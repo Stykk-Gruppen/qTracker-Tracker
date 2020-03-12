@@ -53,7 +53,7 @@ void Server::handle_client(int newsockfd)
 	std::string infoHash = parseAndInsertMessage();
 	
 	std::string answer = buildDictionary(infoHash);
-	std::cout << answer << "\n";
+	std::cout << "\n" << answer << "\n";
 	write(newsockfd, answer.c_str(), strlen(answer.c_str()));
 }
 
