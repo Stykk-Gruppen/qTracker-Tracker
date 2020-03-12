@@ -624,7 +624,7 @@ bool Database::createFilesUsers(int fileId, int userId, int64_t downloaded, int6
 
         pstmt = con->prepareStatement
         (
-            "INSERT INTO filesUsers"
+            "INSERT IGNORE INTO filesUsers"
             "(fileId, userId, downloaded, uploaded, `left`)"
             "VALUES (?, ?, ?, ?, ?)"
         );
