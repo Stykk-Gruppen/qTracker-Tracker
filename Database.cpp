@@ -336,7 +336,7 @@ bool Database::createFile(std::string infoHash)
         // Connect to the MySQL test database
         con->setSchema(dbDatabaseName);
       
-        pstmt = con->prepareStatement("INSERT INTO files (infoHash) Values (?)");
+        pstmt = con->prepareStatement("INSERT IGNORE INTO files (infoHash) Values (?)");
         pstmt->setString(1, infoHash);
         if (pstmt->executeQuery())
         {
