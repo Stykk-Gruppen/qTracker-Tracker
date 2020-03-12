@@ -215,12 +215,12 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 		}
 		if(vectorOfArrays.at(x)[0].compare("info_hash") == 0)
 		{
-			infoHash = urlDecode(vectorOfArrays.at(x)[1]);
+			infoHash = vectorOfArrays.at(x)[1];
 			continue;
 		}
 		if(vectorOfArrays.at(x)[0].compare("peer_id") == 0)
 		{
-			peerId = urlDecode(vectorOfArrays.at(x)[1]);
+			peerId = vectorOfArrays.at(x)[1];
 			continue;
 		}
 		if(vectorOfArrays.at(x)[0].compare("downloaded") == 0)
@@ -336,7 +336,7 @@ bool Database::createFile(std::string infoHash)
         // Connect to the MySQL test database
         con->setSchema(dbDatabaseName);
       
-        pstmt = con->prepareStatement("INSERT IGNORE INTO files (infoHash) Values (?)");
+        pstmt = con->prepareStatement("INSERT INTO files (infoHash) Values (?)");
         pstmt->setString(1, infoHash);
         if (pstmt->executeQuery())
         {
