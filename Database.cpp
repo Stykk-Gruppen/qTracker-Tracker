@@ -161,6 +161,7 @@ int Database::parseEventString(std::string event)
 	} 
 	else
 	{
+        std::cout << "event = Bump (0)" << std::endl;
 		return 0;
 	}
 }
@@ -208,7 +209,7 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 		{
              std::cout << "event = " << vectorOfArrays.at(x)[1];
 			event = parseEventString(vectorOfArrays.at(x)[1]);
-            std::cout << " " << event << std::endl;
+            std::cout << " (" << event << ")" << std::endl;
 			continue;
 		}
 		if(vectorOfArrays.at(x)[0].compare("info_hash") == 0)
