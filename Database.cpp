@@ -190,9 +190,9 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 	int event;
 	std::string infoHash;
 	std::string peerId;
-	int downloaded;
-	int left;
-	int uploaded;
+	long downloaded;
+	long left;
+	long uploaded;
 	std::string torrentPass;
 	for(size_t x=0;x<vectorOfArrays.size();x++)
 	{
@@ -257,7 +257,7 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 }
 
 int Database::insertAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, int downloaded, int left, int uploaded, int userId)
+	std::string peerId, long downloaded, long left, long uploaded, int userId)
 {
 	if(userCanLeech(userId))
 	{
@@ -506,7 +506,7 @@ bool Database::userCanLeech(int userId)
 }
 
 bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, int downloaded, int left, int uploaded, std::string torrentPass)
+	std::string peerId, long downloaded, long left, long uploaded, std::string torrentPass)
 {
     int userId = -1;
     if (getUserId(torrentPass, &userId))
@@ -604,7 +604,7 @@ std::vector<Peer*> Database::getPeers(int fileId)
     }
 }
 
-bool Database::createFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left)
+bool Database::createFilesUsers(int fileId, int userId, long downloaded, long uploaded, long left)
 {
     try
     {
@@ -655,7 +655,7 @@ bool Database::createFilesUsers(int fileId, int userId, int downloaded, int uplo
     }
 }
 
-bool Database::updateFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left, int event)
+bool Database::updateFilesUsers(int fileId, int userId, long downloaded, long uploaded, long left, int event)
 {
     try
     {

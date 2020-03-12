@@ -40,7 +40,7 @@ void Server::central()
 		{
 			close(newsockfd);
 			signal(SIGCHLD,SIG_IGN); 
-		}
+		}	
 	}
 }
 
