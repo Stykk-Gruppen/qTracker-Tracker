@@ -30,7 +30,7 @@ public:
 	std::string insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
 	Torrent getTorrent(std::string hashInfo);
 	bool updateAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, long downloaded, long left, long uploaded, std::string torrentPass);
+	std::string peerId, int64_t downloaded, int64_t left, int64_t uploaded, std::string torrentPass);
 	int getTorrentId(std::string infoHash);
 	std::vector<Peer*> getPeers(int torrentId);
 	void connect();
@@ -38,13 +38,13 @@ private:
 	std::string urlDecode(std::string);
 	int parseEventString(std::string);
 	int insertAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-		std::string peerId, long downloaded, long left, long uploaded, int userId);
+		std::string peerId, int64_t downloaded, int64_t left, int64_t uploaded, int userId);
 	bool getUserId(std::string torrentPass, int *userId);
 	bool userCanLeech(int userId);
 	bool createFile(std::string infoHash);
 	bool updateFile(int fileId);
-	bool createFilesUsers(int fileId, int userId, long downloaded, long uploaded, long left);
-	bool updateFilesUsers(int fileId, int userId, long downloaded, long uploaded, long left, int event);
+	bool createFilesUsers(int fileId, int userId, int64_t downloaded, int64_t uploaded, int64_t left);
+	bool updateFilesUsers(int fileId, int userId, int64_t downloaded, int64_t uploaded, int64_t left, int event);
 	std::vector<int> getFiles(std::string infoHash);
 	sql::Connection *con;
 };

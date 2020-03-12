@@ -190,9 +190,9 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 	int event;
 	std::string infoHash;
 	std::string peerId;
-	long downloaded;
-	long left;
-	long uploaded;
+	int64_t downloaded;
+	int64_t left;
+	int64_t uploaded;
 	std::string torrentPass;
 	for(size_t x=0;x<vectorOfArrays.size();x++)
 	{
@@ -225,17 +225,17 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 		}
 		if(vectorOfArrays.at(x)[0].compare("downloaded") == 0)
 		{
-			downloaded = stoi(vectorOfArrays.at(x)[1]);
+			downloaded = stoll(vectorOfArrays.at(x)[1]);
 			continue;
 		}
 		if(vectorOfArrays.at(x)[0].compare("left") == 0)
 		{
-			left = stoi(vectorOfArrays.at(x)[1]);
+			left = stoll(vectorOfArrays.at(x)[1]);
 			continue;
 		}
 		if(vectorOfArrays.at(x)[0].compare("uploaded") == 0)
 		{
-			uploaded = stoi(vectorOfArrays.at(x)[1]);
+			uploaded = stoll(vectorOfArrays.at(x)[1]);
 			continue;
 		}
 		if(vectorOfArrays.at(x)[0].compare("urlKey") == 0)
@@ -257,7 +257,7 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 }
 
 int Database::insertAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, long downloaded, long left, long uploaded, int userId)
+	std::string peerId, int64_t downloaded, int64_t left, int64_t uploaded, int userId)
 {
 	if(userCanLeech(userId))
 	{
@@ -286,9 +286,9 @@ int Database::insertAnnounceLog(std::string ipa, int port, int event, std::strin
             pstmt->setInt(3, event);
             pstmt->setString(4, infoHash);
             pstmt->setString(5, peerId);
-            pstmt->setInt(6, downloaded);
-            pstmt->setInt(7, left);
-            pstmt->setInt(8, uploaded);
+            pstmt->setUInt64(6, downloaded);
+            pstmt->setUInt64(7, left);
+            pstmt->setUInt64(8, uploaded);
             pstmt->setInt(9, userId);
             if (pstmt->executeQuery())
             {
@@ -506,7 +506,7 @@ bool Database::userCanLeech(int userId)
 }
 
 bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, long downloaded, long left, long uploaded, std::string torrentPass)
+	std::string peerId, int64_t downloaded, int64_t left, int64_t uploaded, std::string torrentPass)
 {
     int userId = -1;
     if (getUserId(torrentPass, &userId))
@@ -532,9 +532,9 @@ bool Database::updateAnnounceLog(std::string ipa, int port, int event, std::stri
             "UPDATE announceLog SET event = ?, downloaded = ?, `left` = ?, uploaded = ?, modifiedTime = NOW() WHERE infoHash = ? AND peerId = ?"
             );
             pstmt->setInt(1, event);
-            pstmt->setInt(2, downloaded);
-            pstmt->setInt(3, left);
-            pstmt->setInt(4, uploaded);
+            pstmt->setUInt64(2, downloaded);
+            pstmt->setUInt64(3, left);
+            pstmt->setUInt64(4, uploaded);
             pstmt->setString(5, infoHash);
             pstmt->setString(6, peerId); 
             if (pstmt->executeUpdate() > 0)
@@ -604,7 +604,7 @@ std::vector<Peer*> Database::getPeers(int fileId)
     }
 }
 
-bool Database::createFilesUsers(int fileId, int userId, long downloaded, long uploaded, long left)
+bool Database::createFilesUsers(int fileId, int userId, int64_t downloaded, int64_t uploaded, int64_t left)
 {
     try
     {
@@ -630,9 +630,9 @@ bool Database::createFilesUsers(int fileId, int userId, long downloaded, long up
         );
         pstmt->setInt(1, fileId);
         pstmt->setInt(2, userId);
-        pstmt->setInt(3, downloaded);
-        pstmt->setInt(4, uploaded);
-        pstmt->setInt(5, left);
+        pstmt->setUInt64(3, downloaded);
+        pstmt->setUInt64(4, uploaded);
+        pstmt->setUInt64(5, left);
         std::cout << pstmt << std::endl;
         if( pstmt->executeQuery())
         {
@@ -655,7 +655,7 @@ bool Database::createFilesUsers(int fileId, int userId, long downloaded, long up
     }
 }
 
-bool Database::updateFilesUsers(int fileId, int userId, long downloaded, long uploaded, long left, int event)
+bool Database::updateFilesUsers(int fileId, int userId, int64_t downloaded, int64_t uploaded, int64_t left, int event)
 {
     try
     {
@@ -690,14 +690,14 @@ bool Database::updateFilesUsers(int fileId, int userId, long downloaded, long up
 
         //Hvis man bare kunne brukte :downloaded osv..
         pstmt->setInt(1, event);
-        pstmt->setInt(2, left);
-        pstmt->setInt(3, downloaded);
-        pstmt->setInt(4, downloaded);
-        pstmt->setInt(5, downloaded);
-        pstmt->setInt(6, uploaded);
-        pstmt->setInt(7, uploaded);
-        pstmt->setInt(8, uploaded);
-        pstmt->setInt(9, left);
+        pstmt->setUInt64(2, left);
+        pstmt->setUInt64(3, downloaded);
+        pstmt->setUInt64(4, downloaded);
+        pstmt->setUInt64(5, downloaded);
+        pstmt->setUInt64(6, uploaded);
+        pstmt->setUInt64(7, uploaded);
+        pstmt->setUInt64(8, uploaded);
+        pstmt->setUInt64(9, left);
         pstmt->setInt(10, fileId);
         pstmt->setInt(11, userId);
         if (pstmt->executeUpdate() > 0)
