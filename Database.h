@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <iomanip>
 #include "config.cpp"
 #include "Torrent.h"
 
@@ -35,6 +36,7 @@ public:
 	std::vector<Peer*> getPeers(int torrentId);
 	void connect();
 private:
+	std::string decode(std::string str);
 	std::string urlDecode(std::string);
 	int parseEventString(std::string);
 	int insertAnnounceLog(std::string ipa, int port, int event, std::string infoHash,

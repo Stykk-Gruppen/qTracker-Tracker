@@ -167,6 +167,26 @@ int Database::parseEventString(std::string event)
 	}
 }
 
+std::string Database::decode(std::string str)
+{
+    std::string decoded = "";
+    for (int i = 0; i < str.size(); i++)
+    {
+        if (str[i] == '%')
+        {
+            decoded += std::tolower(str[i+1]);
+            decoded += std::tolower(str[i+2]);
+            if (str[i+3] != '%')
+            {
+                std::ostringstream os;
+                os << std::hex << int(str[i+3]);
+                decoded += os.str();
+            }
+        }
+    }
+    return decoded;
+}
+
 std::string Database::urlDecode(std::string urlEncodedString)
 {
 	//%8E%7C%7C%1Bt%2E%9D%C7%AE%7E%AA9%1CB%7D%19%14a%D6%0C
@@ -208,14 +228,14 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
 		}
 		if(vectorOfArrays.at(x)[0].compare("event") == 0)
 		{
-      std::cout << "event = " << vectorOfArrays.at(x)[1];
+            std::cout << "event = " << vectorOfArrays.at(x)[1];
 			event = parseEventString(vectorOfArrays.at(x)[1]);
-      std::cout << " (" << event << ")" << std::endl;
+            std::cout << " (" << event << ")" << std::endl;
 			continue;
 		}
 		if(vectorOfArrays.at(x)[0].compare("info_hash") == 0)
 		{
-			infoHash = vectorOfArrays.at(x)[1];
+			infoHash = decode(vectorOfArrays.at(x)[1]);
 			continue;
 		}
 		if(vectorOfArrays.at(x)[0].compare("peer_id") == 0)
