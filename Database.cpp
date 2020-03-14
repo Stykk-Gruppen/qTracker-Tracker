@@ -833,7 +833,7 @@ bool Database::updateUserTorrentTotals(int torrentId, int userId, uint64_t downl
 
         pstmt = con->prepareStatement
                 (
-                    "SELECT downloaded FROM "
+                    "SELECT downloaded,uploaded FROM "
                     "clientTorrents "
                     "WHERE torrentId = ? "
                     "AND clientId = ?"
