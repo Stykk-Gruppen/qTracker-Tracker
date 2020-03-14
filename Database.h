@@ -39,9 +39,7 @@ private:
 	bool userCanLeech(int userId);
 	bool getClientId(std::string peerId, std::string ipa, int port, int userId, int *clientId, bool recursive);
 	bool createClient(std::string peerId, std::string ipa, int port, int ipaId, int userId, int *clientId);
-	bool updateTorrent(std::string ipa, int port, int event, std::string infoHash,
-		std::string peerId, uint64_t downloaded, uint64_t left, uint64_t uploaded,
-		std::string torrentPass);
+	bool updateTorrent(int torrentId);
 	bool createTorrent(int uploaderUserId, std::string infoHash, int *torrentId);
 	bool torrentExists(std::string infoHash, int uploaderUserId, int *torrentId, bool recursive);
 	bool ipaIsBanned(std::string ipa);

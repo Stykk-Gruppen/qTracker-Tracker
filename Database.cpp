@@ -559,12 +559,16 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     if (pstmt->executeUpdate() <= 0)
                     {
                         std::cout << "clientTorrent doesn't exist. Will create one. " << std::endl;
-                        if(!createClientTorrent(torrentId, clientId, downloaded, left, uploaded, event))
+                        if (!createClientTorrent(torrentId, clientId, downloaded, left, uploaded, event))
                         {
                             return false;
                         }
                     }
-                    return updateUserTorrentTotals(clientId,torrentId, userId, downloaded, uploaded);
+                    if (!updateUserTorrentTotals(clientId,torrentId, userId, downloaded, uploaded))
+                    {
+                        return false;
+                    }
+                    updateTorrent(torrentId);
                 }
                 catch (sql::SQLException &e)
                 {
@@ -942,6 +946,57 @@ bool Database::createUserTorrentTotals(int torrentId, int userId, uint64_t downl
     catch (sql::SQLException &e)
     {
         std::cout << "Database::createUserTorrentTotals ";
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        return false;
+    }
+}
+
+bool Database::updateTorrent(int torrentId)
+{
+    try
+    {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::PreparedStatement *pstmt;
+        sql::ResultSet *res;
+
+        // Create a connection
+        driver = get_driver_instance();
+        std::string t = "tcp://";
+        t += dbHostName;
+        t += ":3306";
+        con = driver->connect(t, dbUserName, dbPassword);
+        // Connect to the MySQL test database
+        con->setSchema(dbDatabaseName);
+
+        pstmt = con->prepareStatement
+        (
+            "UPDATE torrent "
+            "SET "
+            "seeders = (SELECT DISTINCT COUNT(isActive) FROM clientTorrents WHERE torrentId = ?), "
+            "leechers = (SELECT DISTINCT COUNT(isActive) FROM clientTorrents WHERE completed = 0 AND torrentId = ?), "
+            "completed = (SELECT SUM(IF(completed = 1, 1, 0)) FROM clientTorrents WHERE torrentId = ?) "
+            "WHERE id = ?;"
+        );
+        pstmt->setInt(1, torrentId);
+        pstmt->setInt(2, torrentId);
+        pstmt->setInt(3, torrentId);
+        pstmt->setInt(4, torrentId);
+        if (pstmt->executeQuery())
+        {
+            std::cout << "Torrent updated" << std::endl;
+            return true;
+        }
+        else
+        {
+            std::cout << "Failed to update Torrent" << std::endl;
+            return false;
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cout << "Database::updateTorrent ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return false;
