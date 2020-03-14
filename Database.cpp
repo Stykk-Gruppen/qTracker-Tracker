@@ -568,7 +568,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     {
                         return false;
                     }
-                    updateTorrent(torrentId);
+                    return updateTorrent(torrentId);
                 }
                 catch (sql::SQLException &e)
                 {
