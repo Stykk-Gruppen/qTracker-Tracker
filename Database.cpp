@@ -72,7 +72,10 @@ std::string Database::decode(std::string str)
             {
                 std::ostringstream os;
                 os << std::hex << int(str[i+3]);
-                decoded += os.str();
+                if (os.str() != "0")
+                {
+                    decoded += os.str();
+                }
             }
         }
     }
