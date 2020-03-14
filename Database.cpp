@@ -551,7 +551,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                         std::cout << "clientTorrent doesn't exist. Will create one. " << std::endl;
                         if(!createClientTorrent(torrentId, clientId, downloaded, left, uploaded, event))
                         {
-                            return false
+                            return false;
                         }
                     }
                     return updateUserTorrentTotals(int torrentId, int userId, uint64_t downloaded, uint64_t uploaded);
