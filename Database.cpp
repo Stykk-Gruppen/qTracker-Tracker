@@ -803,7 +803,7 @@ bool Database::createClient(std::string peerId, std::string ipa, int port, int i
         // Connect to the MySQL test database
         con->setSchema(dbDatabaseName);
 
-        pstmt = con->prepareStatement("INSERT INTO client (peerId, port, ipaId) VALUES (?, ?, ?)");
+        pstmt = con->prepareStatement("INSERT IGNORE INTO client (peerId, port, ipaId) VALUES (?, ?, ?)");
         pstmt->setString(1, peerId);
         pstmt->setInt(2, port);
         pstmt->setInt(3, ipaId);
