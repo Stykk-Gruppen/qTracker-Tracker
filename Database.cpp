@@ -904,7 +904,6 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
         std::cout << "Database::updateUserTorrentTotals ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
-        std::cout << ", SQLSymbol: " << e.getSQLSymbol() << " )" << std::endl;
         return false;
     }
 }
