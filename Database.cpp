@@ -857,11 +857,11 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
         res = pstmt->executeQuery();
         if(res->next())
         {
-            int oldDownloaded = res->getInt("downloaded");
-            int oldUploaded = res->getInt("uploaded");
+            uint64_t oldDownloaded = res->getUInt64("downloaded");
+            uint64_t oldUploaded = res->getUInt64("uploaded");
 
-            int downloadedTotalIncrement = downloaded-oldDownloaded;
-            int uploadedTotalIncrement = uploaded-oldUploaded;
+            uint64_t downloadedTotalIncrement = downloaded-oldDownloaded;
+            uint64_t uploadedTotalIncrement = uploaded-oldUploaded;
 
             std::cout << "finished first part " << downloadedTotalIncrement << " " << uploadedTotalIncrement << std::endl;
             /* If user har restartet the same torrent we do not
