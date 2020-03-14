@@ -478,7 +478,10 @@ bool Database::ipaIsBanned(std::string ipa)
 
         pstmt = con->prepareStatement("SELECT isBanned FROM ipAddress WHERE ipa = ?");
         pstmt->setString(1, ipa);
-        if (pstmt->executeQuery())
+        res = pstmt->executeQuery();
+        res->next();
+        int isBanned = res->getInt("isBanned");
+        if (isBanned==0)
         {
             std::cout << "Valid IP Address" << std::endl;
             return false;
