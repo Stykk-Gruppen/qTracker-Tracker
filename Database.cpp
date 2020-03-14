@@ -898,6 +898,10 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
                 return createUserTorrentTotals(torrentId, userId, downloaded, uploaded);
             }
         }
+        else
+        {
+            return false;
+        }
     }
     catch (sql::SQLException &e)
     {
