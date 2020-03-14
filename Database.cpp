@@ -475,22 +475,29 @@ bool Database::ipaIsBanned(std::string ipa)
         con = driver->connect(t, dbUserName, dbPassword);
         // Connect to the MySQL test database
         con->setSchema(dbDatabaseName);
-
         pstmt = con->prepareStatement("SELECT isBanned FROM ipAddress WHERE ipa = ?");
         pstmt->setString(1, ipa);
         res = pstmt->executeQuery();
-        res->next();
-        int isBanned = res->getInt("isBanned");
-        if (isBanned==0)
+        if(res->next())
         {
-            std::cout << "Valid IP Address" << std::endl;
-            return false;
+            int isBanned = res->getInt("isBanned");
+            if (isBanned==0)
+            {
+                std::cout << "Valid IP Address" << std::endl;
+                return false;
+            }
+            else
+            {
+                std::cout << "Banned IP Address " << std::endl;
+                return true;
+            }
         }
         else
         {
-            std::cout << "Banned IP Address " << std::endl;
-            return true;
+            std::cout << "IP Address does not exist, so user is not banned" << std::endl;
+            return false;
         }
+        
     }
     catch (sql::SQLException &e)
     {
@@ -844,43 +851,48 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
         pstmt->setInt(1, torrentId);
         pstmt->setInt(2, clientId);
         res = pstmt->executeQuery();
-        res->next();
-        int oldDownloaded = res->getInt("downloaded");
-        int oldUploaded = res->getInt("uploaded");
+        if(res->next())
+        {
+            int oldDownloaded = res->getInt("downloaded");
+            int oldUploaded = res->getInt("uploaded");
 
-        int downloadedTotalIncrement = downloaded-oldDownloaded;
-        int uploadedTotalIncrement = uploaded-oldUploaded;
+            int downloadedTotalIncrement = downloaded-oldDownloaded;
+            int uploadedTotalIncrement = uploaded-oldUploaded;
 
-        /* If user har restartet the same torrent we do not
-         want to update the total with a negative number */
-        if(downloadedTotalIncrement<=0)
-        {
-            downloadedTotalIncrement = downloaded;
-        }
-        if(uploadedTotalIncrement<=0)
-        {
-            uploadedTotalIncrement = uploaded;
-        }
-        pstmt = con->prepareStatement
-                (
-                    "UPDATE userTorrentTotals SET"
-                    "totalDownloaded = totalDownloaded + ?,"
-                    "totalUploaded = totalUploaded + ? "
-                    "WHERE torrentId = ? AND userId = ?"
-                    );
-        pstmt->setUInt64(1, downloadedTotalIncrement);
-        pstmt->setUInt64(2, uploadedTotalIncrement);
-        pstmt->setInt(3, torrentId);
-        pstmt->setInt(2, userId);
-        if (pstmt->executeUpdate() > 0)
-        {
-            std::cout << "Updated userTorrentTotals in the Database" << std::endl;
-            return true;
-        }
-        else
-        {
-            std::cout << "Failed to update userTorrentTotals in the Database. Will create one " << std::endl;
-            return createUserTorrentTotals(torrentId, userId, downloaded, uploaded);
+            std::cout << "finished first part " << downloadedTotalIncrement << " " << uploadedTotalIncrement << std::endl;
+            /* If user har restartet the same torrent we do not
+             want to update the total with a negative number */
+            if(downloadedTotalIncrement<=0)
+            {
+                downloadedTotalIncrement = downloaded;
+            }
+            if(uploadedTotalIncrement<=0)
+            {
+                uploadedTotalIncrement = uploaded;
+            }
+            std::cout << "updated increments " << downloadedTotalIncrement << " " << uploadedTotalIncrement << std::endl;
+            sql::PreparedStatement *pstmt2;
+            pstmt2 = con->prepareStatement
+                    (
+                        "UPDATE userTorrentTotals SET "
+                        "totalDownloaded = totalDownloaded + ?,"
+                        "totalUploaded = totalUploaded + ? "
+                        "WHERE torrentId = ? AND userId = ?"
+                        );
+            pstmt2->setUInt64(1, downloadedTotalIncrement);
+            pstmt2->setUInt64(2, uploadedTotalIncrement);
+            pstmt2->setInt(3, torrentId);
+            pstmt2->setInt(2, userId);
+            if (pstmt2->executeUpdate() > 0)
+            {
+                std::cout << "Updated userTorrentTotals in the Database" << std::endl;
+                return true;
+            }
+            else
+            {
+                std::cout << "Failed to update userTorrentTotals in the Database. Will create one " << std::endl;
+                return createUserTorrentTotals(torrentId, userId, downloaded, uploaded);
+            }
         }
     }
     catch (sql::SQLException &e)
@@ -888,6 +900,7 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
         std::cout << "Database::updateUserTorrentTotals ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        std::cout << ", SQLSymbol: " << e.getSQLSymbol() << " )" << std::endl;
         return false;
     }
 }
