@@ -336,7 +336,7 @@ std::vector<Peer*> Database::getPeers(std::string infoHash)
                 "ipa, "
                 "port "
             "FROM " 
-                "torrent AS t "
+                "torrent AS t, "
                 "clientTorrents AS ct, "
                 "client AS c, "
                 "ipAddress AS ip "
@@ -531,7 +531,7 @@ std::string peerId, uint64_t downloaded, uint64_t left, uint64_t uploaded, std::
                         "announced = announced + 1, "
                         "completed = IF(? = 1, 1, 0), "
                         "downloaded = ?, "
-                        "left = ?, "
+                        "`left` = ?, "
                         "uploaded = ?, "
                         "lastEvent = ?, "
                         "lastActivity = NOW() "
@@ -549,7 +549,7 @@ std::string peerId, uint64_t downloaded, uint64_t left, uint64_t uploaded, std::
                     if (pstmt->executeUpdate() > 0)
                     {
                         std::cout << "Updated existing clientTorrent" << std::endl;
-                        return false;
+                        return true;
                     }
                     else
                     {
@@ -559,7 +559,7 @@ std::string peerId, uint64_t downloaded, uint64_t left, uint64_t uploaded, std::
                 }
                 catch (sql::SQLException &e)
                 {
-                    std::cout << "Database::ipaIsBanned ";
+                    std::cout << "Database::updateClientTorrents ";
                     std::cout << " (MySQL error code: " << e.getErrorCode();
                     std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
                     return true;
@@ -591,7 +591,7 @@ bool Database::createClientTorrent(int torrentId, int clientId, uint64_t downloa
         pstmt = con->prepareStatement
         (
             "INSERT INTO clientTorrents " 
-            "(torrentId, clientId, downloaded, left, uploaded, lastEvent, lastActivity) "
+            "(torrentId, clientId, downloaded, `left`, uploaded, lastEvent, lastActivity) "
             "VALUES (?, ?, ?, ?, ?, ?, NOW())"
         );
         pstmt->setInt(1, torrentId);
@@ -599,7 +599,7 @@ bool Database::createClientTorrent(int torrentId, int clientId, uint64_t downloa
         pstmt->setUInt64(3, downloaded);
         pstmt->setUInt64(4, left);
         pstmt->setUInt64(5, uploaded);
-        pstmt->setUInt64(6, event);
+        pstmt->setInt(6, event);
         if (pstmt->executeQuery())
         {
             std::cout << "Created new clientTorrents " << std::endl;
@@ -690,7 +690,7 @@ bool Database::getClientId(std::string peerId, std::string ipa, int port, int us
             // Connect to the MySQL test database
             con->setSchema(dbDatabaseName);
 
-            pstmt = con->prepareStatement("SELECT id FROM client WHERE peerId = ?, port = ?, ipaId = ?");
+            pstmt = con->prepareStatement("SELECT id FROM client WHERE peerId = ? AND port = ? AND ipaId = ?");
             pstmt->setString(1, peerId);
             pstmt->setInt(2, port);
             pstmt->setInt(3, ipaId);
@@ -793,7 +793,7 @@ bool Database::createClient(std::string peerId, std::string ipa, int port, int i
         pstmt = con->prepareStatement("INSERT INTO client (peerId, port, ipaId) VALUES (?, ?, ?)");
         pstmt->setString(1, peerId);
         pstmt->setInt(2, port);
-        pstmt->setInt(2, ipaId);
+        pstmt->setInt(3, ipaId);
         if (pstmt->executeQuery())
         {
             std::cout << "Added new client to the Database. Will do recursive function to get clientId" << std::endl;
