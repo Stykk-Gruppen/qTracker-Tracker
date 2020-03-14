@@ -47,7 +47,7 @@ private:
 	bool ipaIsBanned(std::string ipa);
 	bool getIpaId(std::string ipa, int userId, int *ipaId, bool recursive);
 	bool createIpAddress(std::string ipa, int userId, int *ipaId);
-	bool updateUserTorrentTotals(int torrentId, int userId, uint64_t downloaded, uint64_t uploaded);
+	bool updateUserTorrentTotals(int clientId,int torrentId, int userId, uint64_t downloaded, uint64_t uploaded);
 	bool createUserTorrentTotals(int torrentId, int userId, uint64_t downloaded, uint64_t uploaded);
 	bool updateClientTorrents(std::string ipa, int port, int event, std::string infoHash,
 		std::string peerId, uint64_t downloaded, uint64_t left, uint64_t uploaded,

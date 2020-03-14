@@ -554,7 +554,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                             return false;
                         }
                     }
-                    return updateUserTorrentTotals(int torrentId, int userId, uint64_t downloaded, uint64_t uploaded);
+                    return updateUserTorrentTotals(clientId,torrentId, userId, downloaded, uploaded);
                 }
                 catch (sql::SQLException &e)
                 {
@@ -813,7 +813,7 @@ bool Database::createClient(std::string peerId, std::string ipa, int port, int i
     }
 }
 
-bool Database::updateUserTorrentTotals(int torrentId, int userId, uint64_t downloaded, uint64_t uploaded)
+bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, uint64_t downloaded, uint64_t uploaded)
 {
     try
     {
