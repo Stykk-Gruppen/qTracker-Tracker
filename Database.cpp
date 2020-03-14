@@ -886,7 +886,7 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
             pstmt2->setUInt64(1, downloadedTotalIncrement);
             pstmt2->setUInt64(2, uploadedTotalIncrement);
             pstmt2->setInt(3, torrentId);
-            pstmt2->setInt(2, userId);
+            pstmt2->setInt(4, userId);
             if (pstmt2->executeUpdate() > 0)
             {
                 std::cout << "Updated userTorrentTotals in the Database" << std::endl;
