@@ -61,24 +61,27 @@ int Database::parseEventString(std::string event)
 
 std::string Database::decode(std::string str)
 {
+    std::cout << std::endl << "-------- (Stian Decoder) --------" << std::endl << std::endl;
     std::string decoded = "";
     for (int i = 0; i < str.size(); i++)
     {
-        if (str[i] == '%')
+        if (str[i] != '%')
         {
-            decoded += std::tolower(str[i+1]);
-            decoded += std::tolower(str[i+2]);
-            if (str[i+3] != '%')
-            {
-                std::ostringstream os;
-                os << std::hex << int(str[i+3]);
-                if (os.str() != "0")
-                {
-                    decoded += os.str();
-                }
-            }
+            std::ostringstream os;
+            os << std::hex << (int)str[i];
+            decoded += os.str();
+            std::cout << str[i] << " ---> " << os.str() << std::endl;
+        }
+        else
+        {
+            decoded += str[i+1];
+            decoded += str[i+2];
+            i = i + 2;
         }
     }
+    std::cout << "Size: " << decoded.size() << std::endl;
+    std::cout << decoded << std::endl;
+    std::cout << std::endl << "-------- (Stian Decoder) --------" << std::endl << std::endl;
     return decoded;
 }
 
