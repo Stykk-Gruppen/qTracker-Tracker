@@ -407,7 +407,7 @@ bool Database::torrentExists(std::string infoHash, int uploaderUserId, int *torr
             if (recursive)
             {
                 return createTorrent(uploaderUserId, infoHash, torrentId);
-            } 
+            }
             else
             {
                 return false;
@@ -870,45 +870,52 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
             uint64_t downloadedTotalIncrement = downloaded-oldDownloaded;
             uint64_t uploadedTotalIncrement = uploaded-oldUploaded;
 
-            std::cout << "finished first part " << downloadedTotalIncrement << " " << uploadedTotalIncrement << std::endl;
-            /* If user har restartet the same torrent we do not
-             want to update the total with a negative number */
-            if(downloadedTotalIncrement<=0)
-            {
-                downloadedTotalIncrement = downloaded;
-            }
-            if(uploadedTotalIncrement<=0)
-            {
-                uploadedTotalIncrement = uploaded;
-            }
-            std::cout << "updated increments " << downloadedTotalIncrement << " " << uploadedTotalIncrement << std::endl;
-            sql::PreparedStatement *pstmt2;
-            pstmt2 = con->prepareStatement
+            //Checks if torrentId,userId combo exists before update
+            sql::PreparedStatement *pstmt3 = con->prepareStatement
                     (
-                        "UPDATE userTorrentTotals SET "
-                        "totalDownloaded = totalDownloaded + ?,"
-                        "totalUploaded = totalUploaded + ? "
-                        "WHERE torrentId = ? AND userId = ?"
+                        "SELECT 1 FROM "
+                        "userTorrentTotals "
+                        "WHERE torrentId = ? "
+                        "AND userId = ?"
                         );
-            pstmt2->setUInt64(1, downloadedTotalIncrement);
-            pstmt2->setUInt64(2, uploadedTotalIncrement);
-            pstmt2->setInt(3, torrentId);
-            pstmt2->setInt(4, userId);
-            if (pstmt2->executeUpdate() > 0)
+            pstmt3->setInt(1, torrentId);
+            pstmt3->setInt(2, userId);
+            sql::ResultSet *res2 = pstmt3->executeQuery();
+            if(res2->next())
             {
-                std::cout << "Updated userTorrentTotals in the Database" << std::endl;
-                return true;
-            }
-            else
-            {
-                std::cout << "Failed to update userTorrentTotals in the Database. Will create one " << std::endl;
-                return createUserTorrentTotals(torrentId, userId, downloaded, uploaded);
+                int boolTest = res2->getInt("1");
+                if(boolTest==1)
+                {
+
+                    /* If user har restartet the same torrent we do not
+                    want to update the total with a negative number */
+                    if(downloadedTotalIncrement<=0)
+                    {
+                        downloadedTotalIncrement = downloaded;
+                    }
+                    if(uploadedTotalIncrement<=0)
+                    {
+                        uploadedTotalIncrement = uploaded;
+                    }
+                    std::string query = "UPDATE userTorrentTotals SET "
+                                        "totalDownloaded = totalDownloaded + ?,"
+                                        "totalUploaded = totalUploaded + ? "
+                                        "WHERE torrentId = ? AND userId = ?;";
+                    //std::cout << "query: \n" << query << std::endl;
+                    sql::PreparedStatement *pstmt2;
+                    pstmt2 = con->prepareStatement(query);
+                    pstmt2->setUInt64(1, downloadedTotalIncrement);
+                    pstmt2->setUInt64(2, uploadedTotalIncrement);
+                    pstmt2->setInt(3, torrentId);
+                    pstmt2->setInt(4, userId);
+                    pstmt2->executeUpdate();
+                    std::cout << "Updated userTorrentTotals in the Database" << std::endl;
+                    return true;
+                }               
             }
         }
-        else
-        {
-            return false;
-        }
+        std::cout << "Failed to update userTorrentTotals in the Database. Will create one " << std::endl;
+        return createUserTorrentTotals(torrentId, userId, downloaded, uploaded);
     }
     catch (sql::SQLException &e)
     {
@@ -981,14 +988,14 @@ bool Database::updateTorrent(int torrentId)
         con->setSchema(dbDatabaseName);
 
         pstmt = con->prepareStatement
-        (
-            "UPDATE torrent "
-            "SET "
-            "seeders = (SELECT DISTINCT COUNT(isActive) FROM clientTorrents WHERE torrentId = ?), "
-            "leechers = (SELECT DISTINCT COUNT(isActive) FROM clientTorrents WHERE completed = 0 AND torrentId = ?), "
-            "completed = (SELECT SUM(IF(completed = 1, 1, 0)) FROM clientTorrents WHERE torrentId = ?) "
-            "WHERE id = ?;"
-        );
+                (
+                    "UPDATE torrent "
+                    "SET "
+                    "seeders = (SELECT DISTINCT COUNT(isActive) FROM clientTorrents WHERE torrentId = ?), "
+                    "leechers = (SELECT DISTINCT COUNT(isActive) FROM clientTorrents WHERE completed = 0 AND torrentId = ?), "
+                    "completed = (SELECT SUM(IF(completed = 1, 1, 0)) FROM clientTorrents WHERE torrentId = ?) "
+                    "WHERE id = ?;"
+                    );
         pstmt->setInt(1, torrentId);
         pstmt->setInt(2, torrentId);
         pstmt->setInt(3, torrentId);
