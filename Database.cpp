@@ -412,6 +412,7 @@ bool Database::torrentExists(std::string infoHash, int uploaderUserId, int *torr
             {
                 return false;
             } */
+            std::cout << "Torrent doesn't exists. ABORTING!" << std::endl;
             return false;
         }
     }
