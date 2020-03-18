@@ -40,7 +40,7 @@ void Server::central()
 		{
 			close(newsockfd);
 			signal(SIGCHLD,SIG_IGN); 
-		}
+		}	
 	}
 }
 
@@ -60,6 +60,12 @@ void Server::handle_client(int newsockfd)
 std::string Server::buildDictionary(std::string infoHash)
 {
 	Torrent t = db->getTorrent(infoHash);
+	for (int i = 0; i < t.peers.size(); i++)
+	{
+		std::cout << std::endl << "peer_id: " << t.peers[i]->peer_id << std::endl
+		<< "ip: " << t.peers[i]->ip << std::endl << "port: "
+		<< t.peers[i]->port << std::endl;
+	}
 
 	auto peers = bencode::list{};
 	for(auto peer : t.peers)

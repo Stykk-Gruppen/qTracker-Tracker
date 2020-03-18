@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <iomanip>
 #include "config.cpp"
 #include "Torrent.h"
 
@@ -22,31 +23,34 @@
 #include <cppconn/statement.h>
 #include <cppconn/prepared_statement.h>
 
-class Database{
+class Database
+{
 public:
 	Database();
-
-	//Return torrentId from DB.
 	std::string insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
-	Torrent getTorrent(std::string hashInfo);
-	bool updateAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-	std::string peerId, int downloaded, int left, int uploaded, std::string torrentPass);
-	int getTorrentId(std::string infoHash);
-	std::vector<Peer*> getPeers(int torrentId);
-	void connect();
+	Torrent getTorrent(std::string infoHash);
 private:
+	std::string decode(std::string str);
 	std::string urlDecode(std::string);
+	std::vector<int> getTorrentData(std::string infoHash);
+	std::vector<Peer*> getPeers(std::string infoHash);
 	int parseEventString(std::string);
-	int insertAnnounceLog(std::string ipa, int port, int event, std::string infoHash,
-		std::string peerId, int downloaded, int left, int uploaded, int userId);
 	bool getUserId(std::string torrentPass, int *userId);
 	bool userCanLeech(int userId);
-	bool createFile(std::string infoHash);
-	bool updateFile(int fileId);
-	bool createFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left);
-	bool updateFilesUsers(int fileId, int userId, int downloaded, int uploaded, int left, int event);
-	std::vector<int> getFiles(std::string infoHash);
-	sql::Connection *con;
+	bool getClientId(std::string peerId, std::string ipa, int port, int userId, int *clientId, bool recursive);
+	bool createClient(std::string peerId, std::string ipa, int port, int ipaId, int userId, int *clientId);
+	bool updateTorrent(int torrentId);
+	bool createTorrent(int uploaderUserId, std::string infoHash, int *torrentId);
+	bool torrentExists(std::string infoHash, int uploaderUserId, int *torrentId, bool recursive);
+	bool ipaIsBanned(std::string ipa);
+	bool getIpaId(std::string ipa, int userId, int *ipaId, bool recursive);
+	bool createIpAddress(std::string ipa, int userId, int *ipaId);
+	bool updateUserTorrentTotals(int clientId,int torrentId, int userId, uint64_t downloaded, uint64_t uploaded);
+	bool createUserTorrentTotals(int torrentId, int userId, uint64_t downloaded, uint64_t uploaded);
+	bool updateClientTorrents(std::string ipa, int port, int event, std::string infoHash,
+		std::string peerId, uint64_t downloaded, uint64_t left, uint64_t uploaded,
+		std::string torrentPass);
+	bool createClientTorrent(int torrentId, int clientId, uint64_t downloaded, uint64_t left, uint64_t uploaded, int event);
 };
 
 #endif
