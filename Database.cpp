@@ -74,8 +74,8 @@ std::string Database::decode(std::string str)
         }
         else
         {
-            decoded += str[i+1];
-            decoded += str[i+2];
+            decoded += std::tolower(str[i+1]);
+            decoded += std::tolower(str[i+2]);
             i = i + 2;
         }
     }
