@@ -994,8 +994,8 @@ bool Database::updateTorrent(int torrentId)
                 (
                     "UPDATE torrent "
                     "SET "
-                    "seeders = (SELECT DISTINCT COUNT(isActive) FROM clientTorrents WHERE torrentId = ?), "
-                    "leechers = (SELECT DISTINCT COUNT(isActive) FROM clientTorrents WHERE completed = 0 AND torrentId = ?), "
+                    "seeders = (SELECT SUM(isActive) FROM clientTorrents WHERE torrentId = ?), "
+                    "leechers = (SELECT SUM(isActive) FROM clientTorrents WHERE completed = 0 AND torrentId = ?), "
                     "completed = (SELECT SUM(IF(completed = 1, 1, 0)) FROM clientTorrents WHERE torrentId = ?) "
                     "WHERE id = ?;"
                     );
