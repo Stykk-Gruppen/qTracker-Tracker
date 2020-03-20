@@ -355,7 +355,7 @@ std::vector<Peer*> Database::getPeers(std::string infoHash)
                     );
         pstmt->setString(1, infoHash);
         res = pstmt->executeQuery();
-        if (res->next())
+        while (res->next())
         {
             std::string peerId = res->getString("peerId");
             std::string ipa = res->getString("ipa");
