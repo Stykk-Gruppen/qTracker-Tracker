@@ -198,8 +198,8 @@ std::vector<int> Database::getTorrentData(std::string infoHash)
         res = pstmt->executeQuery();
         if (res->next())
         {
-            vec.push_back(res->getInt("leechers"));
             vec.push_back(res->getInt("seeders"));
+            vec.push_back(res->getInt("leechers"));
             return vec;
         }
         else
