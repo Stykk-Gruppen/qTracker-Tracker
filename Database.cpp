@@ -548,7 +548,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                                 "UPDATE clientTorrents SET "
                                 "isActive = IF(? < 3, 1, 0), "
                                 "announced = announced + 1, "
-                                "conpleted = IF(completed = 1, 1, IF(? = 1, 1, 0)), "
+                                "conpleted = IF(? = 1, 1, 0), "
                                 "downloaded = ?, "
                                 "`left` = ?, "
                                 "uploaded = ?, "
@@ -577,7 +577,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     {
                         return false;
                     }
-                    return updateTorrent(torrentId);
+                    return updateTorrent(torrentId, event);
                 }
                 catch (sql::SQLException &e)
                 {
@@ -971,7 +971,7 @@ bool Database::createUserTorrentTotals(int torrentId, int userId, uint64_t downl
     }
 }
 
-bool Database::updateTorrent(int torrentId)
+bool Database::updateTorrent(int torrentId, int event)
 {
     try
     {
@@ -988,6 +988,7 @@ bool Database::updateTorrent(int torrentId)
         con = driver->connect(t, dbUserName, dbPassword);
         // Connect to the MySQL test database
         con->setSchema(dbDatabaseName);
+        bool isCompleted = (event == 1) ? true : false;
 
         pstmt = con->prepareStatement
                 (
@@ -995,12 +996,12 @@ bool Database::updateTorrent(int torrentId)
                     "SET "
                     "seeders = (SELECT SUM(isActive) FROM clientTorrents WHERE torrentId = ?), "
                     "leechers = (SELECT SUM(isActive) FROM clientTorrents WHERE completed = 0 AND torrentId = ?), "
-                    "completed = (SELECT SUM(IF(completed = 1, 1, 0)) FROM clientTorrents WHERE torrentId = ?) "
+                    "completed = IF(? = 1, completed + 1, completed) "
                     "WHERE id = ?;"
                     );
         pstmt->setInt(1, torrentId);
         pstmt->setInt(2, torrentId);
-        pstmt->setInt(3, torrentId);
+        pstmt->setBoolean(3, isCompleted);
         pstmt->setInt(4, torrentId);
         if (pstmt->executeQuery())
         {
