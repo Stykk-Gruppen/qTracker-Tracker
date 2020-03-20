@@ -548,7 +548,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                                 "UPDATE clientTorrents SET "
                                 "isActive = IF(? < 3, 1, 0), "
                                 "announced = announced + 1, "
-                                "completed = IF(? = 1, 1, 0), "
+                                "conpleted = IF(completed = 1, 1, IF(? = 1, 1, 0)), "
                                 "downloaded = ?, "
                                 "`left` = ?, "
                                 "uploaded = ?, "
