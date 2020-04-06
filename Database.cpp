@@ -548,15 +548,16 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                                 "UPDATE clientTorrents SET "
                                 "isActive = IF(? < 3, 1, 0), "
                                 "announced = announced + 1, "
-                                "conpleted = IF(? = 1, 1, 0), "
+                                "completed = IF(? = 1, 1, 0), "
                                 "downloaded = ?, "
                                 "`left` = ?, "
                                 "uploaded = ?, "
                                 "lastEvent = ?, "
-                                "lastActivity = NOW() "
+                                "lastActivity = NOW(), "
+                                "timeActive = IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive) "
                                 "WHERE torrentId = ? "
                                 "AND clientId = ?"
-                                );
+                            );
                     pstmt->setInt(1, event);
                     pstmt->setInt(2, event);
                     pstmt->setUInt64(3, downloaded);
