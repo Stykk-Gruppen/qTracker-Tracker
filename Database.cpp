@@ -546,6 +546,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     pstmt = con->prepareStatement
                             (
                                 "UPDATE clientTorrents SET "
+                                "timeActive = IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive), "
                                 "isActive = IF(? < 3, 1, 0), "
                                 "announced = announced + 1, "
                                 "completed = IF(? = 1, 1, 0), "
@@ -553,8 +554,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                                 "`left` = ?, "
                                 "uploaded = ?, "
                                 "lastEvent = ?, "
-                                "lastActivity = NOW(), "
-                                "timeActive = IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive) "
+                                "lastActivity = NOW() "
                                 "WHERE torrentId = ? "
                                 "AND clientId = ?"
                             );
