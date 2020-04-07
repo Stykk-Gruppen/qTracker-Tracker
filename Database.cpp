@@ -546,10 +546,10 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     pstmt = con->prepareStatement
                             (
                                 "UPDATE clientTorrents SET "
-                                "timeActive = IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive), "
+                                "timeActive = IF(? <> 2, IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive), timeActive), "
                                 "isActive = IF(? < 3, 1, 0), "
                                 "announced = announced + 1, "
-                                "completed = IF(? = 1, 1, 0), "
+                                "completed = IF(? = 0, 1, 0), "
                                 "downloaded = ?, "
                                 "`left` = ?, "
                                 "uploaded = ?, "
@@ -560,12 +560,13 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                             );
                     pstmt->setInt(1, event);
                     pstmt->setInt(2, event);
-                    pstmt->setUInt64(3, downloaded);
-                    pstmt->setUInt64(4, left);
-                    pstmt->setUInt64(5, uploaded);
-                    pstmt->setInt(6, event);
-                    pstmt->setInt(7, torrentId);
-                    pstmt->setInt(8, clientId);
+                    pstmt->setUInt64(3, left);
+                    pstmt->setUInt64(4, downloaded);
+                    pstmt->setUInt64(5, left);
+                    pstmt->setUInt64(6, uploaded);
+                    pstmt->setInt(7, event);
+                    pstmt->setInt(8, torrentId);
+                    pstmt->setInt(9, clientId);
                     if (pstmt->executeUpdate() <= 0)
                     {
                         std::cout << "clientTorrent doesn't exist. Will create one. " << std::endl;
@@ -1045,17 +1046,17 @@ bool Database::updateClient(std::string peerId, std::string ipa, int port, int i
 
         pstmt = con->prepareStatement
                 (
-                    "UPDATE client"
+                    "UPDATE client "
                     "SET "
                     "peerId = ? "
                     "WHERE "
-                    "ipaId ? AND"
+                    "ipaId = ? AND "
                     "port = ?"
                 );
         pstmt->setString(1, peerId);
         pstmt->setInt(2, ipaId);
         pstmt->setInt(3, port);
-        if (pstmt->executeQuery())
+        if (pstmt->executeUpdate() > 0)
         {
             std::cout << "Updated Client" << std::endl;
             return true;
@@ -1074,4 +1075,3 @@ bool Database::updateClient(std::string peerId, std::string ipa, int port, int i
         return false;
     }
 }
-
