@@ -997,12 +997,12 @@ bool Database::updateTorrent(int torrentId, int event)
                 (
                     "UPDATE torrent "
                     "SET "
-                    "seeders = (SELECT SUM(isActive) FROM clientTorrents WHERE torrentId = ?), "
-                    "leechers = (SELECT SUM(isActive) FROM clientTorrents WHERE completed = 0 AND torrentId = ?), "
+                    "seeders = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE torrentId = ?), "
+                    "leechers = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE completed = 0 AND torrentId = ?), "
                     //"completed = IF(? = 1, completed + 1, completed) "
-                    "completed = (SELECT SUM(completed) FROM clientTorrents WHERE torrentId = ?) "
+                    "completed = (SELECT IFNULL(SUM(completed), 0) FROM clientTorrents WHERE torrentId = ?) "
                     "WHERE id = ?;"
-                    );
+                );
         pstmt->setInt(1, torrentId);
         pstmt->setInt(2, torrentId);
         //pstmt->setBoolean(3, isCompleted);
