@@ -1049,9 +1049,9 @@ bool Database::updateClient(std::string peerId, std::string ipa, int port, int i
                     "SET "
                     "peerId = ? "
                     "WHERE "
-                    "c.ipaId ? AND"
+                    "ipaId ? AND"
                     "port = ?"
-                    );
+                );
         pstmt->setString(1, peerId);
         pstmt->setInt(2, ipaId);
         pstmt->setInt(3, port);
