@@ -414,7 +414,7 @@ bool Database::torrentExists(std::string infoHash, int uploaderUserId, int *torr
             {
                 return false;
             } */
-            std::cout << "Torrent doesn't exists. ABORTING!" << std::endl;
+            //std::cout << "Torrent doesn't exists. ABORTING!" << std::endl;
             return false;
         }
     }
@@ -726,10 +726,11 @@ bool Database::getClientId(std::string peerId, std::string ipa, int port, int us
             }
             else
             {
-                std::cout << "Client unknown. Will try to create one. " << std::endl;
+                std::cout << "Client unknown. Will try to update or create one. " << std::endl;
                 if (recursive)
                 {
-                    return createClient(peerId, ipa, port, ipaId, userId, clientId);
+                    //return createClient(peerId, ipa, port, ipaId, userId, clientId);
+                    return updateClient(peerId, ipa, port, ipaId, userId, clientId);
                 }
                 else
                 {
@@ -1018,6 +1019,56 @@ bool Database::updateTorrent(int torrentId, int event)
     catch (sql::SQLException &e)
     {
         std::cout << "Database::updateTorrent ";
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        return false;
+    }
+}
+
+bool Database::updateClient(std::string peerId, std::string ipa, int port, int ipaId, int userId, int *clientId)
+{
+    try
+    {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::PreparedStatement *pstmt;
+        sql::ResultSet *res;
+
+        // Create a connection
+        driver = get_driver_instance();
+        std::string t = "tcp://";
+        t += dbHostName;
+        t += ":3306";
+        con = driver->connect(t, dbUserName, dbPassword);
+        // Connect to the MySQL test database
+        con->setSchema(dbDatabaseName);
+
+        pstmt = con->prepareStatement
+                (
+                    "UPDATE client"
+                    "SET "
+                    "peerId = ? "
+                    "WHERE "
+                    "c.ipaId ? AND"
+                    "port = ?"
+                    );
+        pstmt->setString(1, peerId);
+        pstmt->setInt(2, ipaId);
+        pstmt->setInt(3, port);
+        if (pstmt->executeQuery())
+        {
+            std::cout << "Updated Client" << std::endl;
+            return true;
+        }
+        else
+        {
+            std::cout << "Failed to update Client. Will create one" << std::endl;
+            return createClient(peerId, ipa, port, ipaId, userId, clientId);
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cout << "Database::updateClient ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return false;
