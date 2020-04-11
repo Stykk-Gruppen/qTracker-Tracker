@@ -349,6 +349,7 @@ std::vector<Peer*> Database::getPeers(std::string infoHash)
                     "WHERE "
                     "t.id = ct.torrentId AND "
                     "ct.isActive = 1 AND "
+                    "(TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60) AND "
                     "ct.clientId = c.id AND "
                     "c.ipaId = ip.id AND "
                     "t.infoHash = ?"
@@ -554,7 +555,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                                 "timeActive = IF(? <> 2, IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive), timeActive), "
                                 "isActive = IF(? < 3, 1, 0), "
                                 "announced = announced + 1, "
-                                "completed = IF(? = 0, 1, 0), "
+                                "completed = IF(? = 1, completed + 1, completed), "
                                 "downloaded = ?, "
                                 "`left` = ?, "
                                 "uploaded = ?, "
@@ -574,8 +575,9 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     pstmt->setUInt64(5, left);
                     pstmt->setUInt64(6, uploaded);
                     pstmt->setInt(7, event);
-                    pstmt->setInt(8, torrentId);
-                    pstmt->setInt(9, clientId);
+                    pstmt->setInt(8, clientId);
+                    pstmt->setInt(9, torrentId);
+                    pstmt->setInt(10, torrentPass);
                     if (pstmt->executeUpdate() <= 0)
                     {
                         std::cout << "clientTorrent doesn't exist. Will create one. " << std::endl;
