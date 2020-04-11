@@ -570,14 +570,14 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                             );
                     pstmt->setInt(1, event);
                     pstmt->setInt(2, event);
-                    pstmt->setUInt64(3, left);
+                    pstmt->setInt(3, event);
                     pstmt->setUInt64(4, downloaded);
                     pstmt->setUInt64(5, left);
                     pstmt->setUInt64(6, uploaded);
                     pstmt->setInt(7, event);
                     pstmt->setInt(8, clientId);
                     pstmt->setInt(9, torrentId);
-                    pstmt->setInt(10, torrentPass);
+                    pstmt->setString(10, torrentPass);
                     if (pstmt->executeUpdate() <= 0)
                     {
                         std::cout << "clientTorrent doesn't exist. Will create one. " << std::endl;
