@@ -171,7 +171,6 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
     {
         return NULL;
     }
-    
 }
 
 std::vector<int> Database::getTorrentData(std::string infoHash)
@@ -552,7 +551,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                                 "ipAddress AS ip, "
                                 "user AS u "
                                 "SET "
-                                "timeActive = IF(? <> 2, IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive), timeActive), "
+                                "timeActive = IF(? = 2, timeActive, IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive)), "
                                 "isActive = IF(? < 3, 1, 0), "
                                 "announced = announced + 1, "
                                 "completed = IF(? = 1, completed + 1, completed), "
@@ -1009,7 +1008,7 @@ bool Database::updateTorrent(int torrentId, int event)
                     "UPDATE torrent "
                     "SET "
                     "seeders = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE torrentId = ?), "
-                    "leechers = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE completed = 0 AND torrentId = ?), "
+                    "leechers = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE left > 0 AND torrentId = ?), "
                     //"completed = IF(? = 1, completed + 1, completed) "
                     "completed = (SELECT IFNULL(SUM(completed), 0) FROM clientTorrents WHERE torrentId = ?) "
                     "WHERE id = ?;"
