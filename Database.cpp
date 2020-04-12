@@ -1008,7 +1008,7 @@ bool Database::updateTorrent(int torrentId, int event)
                     "UPDATE torrent "
                     "SET "
                     "seeders = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE torrentId = ?), "
-                    "leechers = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE left > 0 AND torrentId = ?), "
+                    "leechers = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE 'left' > 0 AND torrentId = ?), "
                     //"completed = IF(? = 1, completed + 1, completed) "
                     "completed = (SELECT IFNULL(SUM(completed), 0) FROM clientTorrents WHERE torrentId = ?) "
                     "WHERE id = ?;"
