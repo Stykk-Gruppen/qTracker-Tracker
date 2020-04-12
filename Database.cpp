@@ -589,7 +589,8 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     {
                         return false;
                     }
-                    return updateTorrent(torrentId, event);
+                    //return updateTorrent(torrentId, event);
+                    return true;
                 }
                 catch (sql::SQLException &e)
                 {
@@ -1008,8 +1009,7 @@ bool Database::updateTorrent(int torrentId, int event)
                     "UPDATE torrent "
                     "SET "
                     "seeders = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE torrentId = ?), "
-                    "leechers = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE 'left' > 0 AND torrentId = ?), "
-                    //"completed = IF(? = 1, completed + 1, completed) "
+                    "leechers = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE 'left' != 0 AND torrentId = ?), "
                     "completed = (SELECT IFNULL(SUM(completed), 0) FROM clientTorrents WHERE torrentId = ?) "
                     "WHERE id = ?;"
                 );
