@@ -165,10 +165,12 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
     std::cout << torrentPass << std::endl;
     if (updateClientTorrents(ipa,port,event,infoHash,peerId,downloaded,left,uploaded,torrentPass))
     {
+        std::cout << "Returning infohash" << std::endl;
         return infoHash;
     }
     else
     {
+        std::cout << "Returning nULL infohash" << std::endl;
         return NULL;
     }
 }
@@ -405,6 +407,7 @@ bool Database::torrentExists(std::string infoHash, int uploaderUserId, int *torr
         else
         {
             std::cout << "Torrent doesn't exists. Something went wrong. info hash:"<< infoHash << std::endl;
+            std::cout << "Should return false now!";
             errorMessage = "Torrent doesn't exists!";
             return false;
         }
@@ -521,6 +524,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
             {
                 try
                 {
+                    std::cout << "Trying" << std::endl;
                     sql::Driver *driver;
                     sql::Connection *con;
                     sql::PreparedStatement *pstmt;
@@ -538,20 +542,22 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     con->setSchema(dbDatabaseName);
 
                     pstmt2 = con->prepareStatement
-                            (
-                                "SELECT "
-                                    "timeActive, " 
-                                    "TIMESTAMPDIFF(MINUTE, lastActivity, NOW()) AS 'newSeedMinutes', "
-                                    "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrentId "
-                                    "AND (TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60)) AS 'seeders', "
-                                    "(SELECT SUM(length) FROM torrentFiles AS tf WHERE tf.torrentId = torrentId) AS 'size' "
-                                "FROM "
-                                    "clientTorrents "
-                                "WHERE "
-                                    "torrentId = ? "
-                                "AND "
-                                    "clientId = ? "
-                            );
+                    (
+                        "SELECT "
+                            "timeActive, " 
+                            "TIMESTAMPDIFF(MINUTE, lastActivity, NOW()) AS 'newSeedMinutes', "
+                            "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrentId "
+                            "AND (TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60)) AS 'seeders', "
+                            "(SELECT SUM(length) FROM torrentFiles AS tf WHERE tf.torrentId = torrentId) AS 'size' "
+                        "FROM "
+                            "clientTorrents "
+                        "WHERE "
+                            "torrentId = ? "
+                        "AND "
+                            "clientId = ? "
+                    );
+
+                    std::cout << "After pstmt2 prepareStatement" << std::endl;
 
                     pstmt2->setInt(1, torrentId);
                     pstmt2->setInt(2, clientId);
@@ -560,12 +566,15 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     res = pstmt->executeQuery();
                     if(res->next())
                     {
-                        uint64_t totalTimeActive = res->getUInt64("timeActive");
-                        uint64_t newSeedMinutes = res->getUInt64("newSeedMinutes");
+                        int totalTimeActive = res->getInt("timeActive");
+                        int newSeedMinutes = res->getInt("newSeedMinutes");
                         int seeders = res->getInt("seeders");
                         uint64_t size = res->getUInt64("size");
-                        bonusPointIncrement = calcBonusPoints(size, newSeedMinutes, seeders, totalTimeActive);
+                        //bonusPointIncrement = calcBonusPoints(size, newSeedMinutes, seeders, totalTimeActive);
+                        bonusPointIncrement = 5;
                     }
+
+                    std::cout << "Before pstmt3 prepareStatement" << std::endl;
 
                     pstmt3 = con->prepareStatement
                             (
@@ -1075,7 +1084,7 @@ bool Database::updateTorrent(int torrentId, int event)
     }
 }
 
-int Database::calcBonusPoints(int64_t torrentSizeBytes, int64_t newSeedMinutes, int64_t numberOfSeeders, int64_t totalSeedTimeMinutes)
+int Database::calcBonusPoints(uint64_t torrentSizeBytes, int newSeedMinutes, int numberOfSeeders, int totalSeedTimeMinutes)
 {
     const int bytesInGB = 1000000000;
     const int minutesInHour = 60;

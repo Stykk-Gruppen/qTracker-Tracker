@@ -37,7 +37,7 @@ private:
 	std::vector<int> getTorrentData(std::string infoHash);
 	std::vector<Peer*> getPeers(std::string infoHash);
 	int parseEventString(std::string);
-	int calcBonusPoints(int64_t torrentSizeBytes, int64_t newSeedMinutes, int64_t numberOfSeeders, int64_t totalSeedTimeMinutes);
+	int calcBonusPoints(uint64_t torrentSizeBytes, int newSeedMinutes, int numberOfSeeders, int totalSeedTimeMinutes);
 	bool getUserId(std::string torrentPass, int *userId);
 	bool userCanLeech(int userId);
 	bool getClientId(std::string peerId, std::string ipa, int port, int userId, int *clientId, bool recursive);
