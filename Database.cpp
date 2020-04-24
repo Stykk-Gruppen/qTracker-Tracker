@@ -546,7 +546,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                                     "AND (TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60)) AS 'seeders', "
                                     "(SELECT SUM(length) FROM torrentFiles AS tf WHERE tf.torrentId = torrentId) AS 'size' "
                                 "FROM "
-                                    "clientTorrents"
+                                    "clientTorrents "
                                 "WHERE "
                                     "torrentId = ? "
                                 "AND "
