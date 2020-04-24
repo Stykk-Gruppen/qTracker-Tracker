@@ -238,7 +238,6 @@ Torrent Database::getTorrent(std::string infoHash)
     Torrent t(/*TrackerId*/1, /*seeders*/torrentData[0], /*leechers*/torrentData[1]);
 
     t.peers = getPeers(infoHash);
-    std::cout << t.peers[0]->peer_id << std::endl;
 
     return t;
 }
@@ -543,8 +542,6 @@ bool Database::updateClientTorrents()
                         uint64_t size = res->getUInt64("size");
                         bonusPointIncrement = calcBonusPoints(size, newSeedMinutes, seeders, totalTimeActive);
                     }
-
-                    std::cout << bonusPointIncrement << std::endl;
 
                     pstmt3 = con->prepareStatement
                     (
@@ -1003,7 +1000,6 @@ bool Database::createUserTorrentTotals()
 
 int Database::calcBonusPoints(uint64_t torrentSizeBytes, int newSeedMinutes, int numberOfSeeders, int totalSeedTimeMinutes)
 {
-    std::cout << torrentSizeBytes << "      " << newSeedMinutes << "        " << numberOfSeeders << "       " << totalSeedTimeMinutes << std::endl;
     const double bytesInGB = 1000000000.0;
     const double minutesInHour = 60.0;
     const double minutesInDay = 1400.0;
