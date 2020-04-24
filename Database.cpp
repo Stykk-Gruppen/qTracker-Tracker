@@ -108,7 +108,7 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
     std::string peerId;
     std::string torrentPass;
     int port;
-    int event;
+    int event = 0;
     int64_t downloaded;
     int64_t left;
     int64_t uploaded;
@@ -539,10 +539,12 @@ bool Database::updateClientTorrents()
                     {
                         int totalTimeActive = res->getInt("timeActive");
                         int newSeedMinutes = res->getInt("newSeedMinutes");
-                        int seeders = res->getInt("seeders");
+                        int seeders = res->getInt("seeders") + 1;
                         uint64_t size = res->getUInt64("size");
                         bonusPointIncrement = calcBonusPoints(size, newSeedMinutes, seeders, totalTimeActive);
                     }
+
+                    std::cout << bonusPointIncrement << std::endl;
 
                     pstmt3 = con->prepareStatement
                     (
@@ -552,10 +554,8 @@ bool Database::updateClientTorrents()
                     pstmt3->setInt(1, bonusPointIncrement);
                     if(pstmt3->executeUpdate() <= 0)
                     {
-                        std::cout << "Added " << bonusPointIncrement << " to user: " << annInfo->getClientId() << std::endl;
+                        std::cout << "Added " << bonusPointIncrement << " to user: " << annInfo->getUserId() << std::endl;
                     }
-
-                    std::cout << "clientId: " annInfo->getClientId() << std::endl:
 
                     pstmt = con->prepareStatement
                             (
@@ -1003,9 +1003,10 @@ bool Database::createUserTorrentTotals()
 
 int Database::calcBonusPoints(uint64_t torrentSizeBytes, int newSeedMinutes, int numberOfSeeders, int totalSeedTimeMinutes)
 {
-    const int bytesInGB = 1000000000;
-    const int minutesInHour = 60;
-    const int minutesInDay = 1400;
+    std::cout << torrentSizeBytes << "      " << newSeedMinutes << "        " << numberOfSeeders << "       " << totalSeedTimeMinutes << std::endl;
+    const double bytesInGB = 1000000000.0;
+    const double minutesInHour = 60.0;
+    const double minutesInDay = 1400.0;
     double torrentSizeGb =  torrentSizeBytes / bytesInGB;
     double newSeedHours = newSeedMinutes / minutesInHour;
     double totalSeedTimeDays = totalSeedTimeMinutes / minutesInDay;
