@@ -60,6 +60,7 @@ void Server::handle_client(int newsockfd)
 std::string Server::buildDictionary(std::string infoHash)
 {
 	Torrent t = db->getTorrent(infoHash);
+	std::cout << "Got torrent t" << std::endl;
 	std::string errorMessage = db->getErrorMessage();
 	for (int i = 0; i < t.peers.size(); i++)
 	{
@@ -80,6 +81,7 @@ std::string Server::buildDictionary(std::string infoHash)
 	std::ostringstream stream;
 	if (!errorMessage.empty())
 	{
+		std::cout << "Error message is not empty" << std::endl;
 		bencode::encode(stream, bencode::dict{
 		{"tracker_id", t.trackerId},
 		{"interval", t.interval},
@@ -91,6 +93,7 @@ std::string Server::buildDictionary(std::string infoHash)
 	}
 	else
 	{
+		std::cout << "No error message" << std::endl;
 		bencode::encode(stream, bencode::dict{
 		{"tracker_id", t.trackerId},
 		{"interval", t.interval},
