@@ -104,14 +104,15 @@ std::string Database::urlDecode(std::string urlEncodedString)
 std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
 {
     std::string ipa;
-    int port;
-    int event;
     std::string infoHash;
     std::string peerId;
+    std::string torrentPass;
+    int port;
+    int event;
     int64_t downloaded;
     int64_t left;
     int64_t uploaded;
-    std::string torrentPass;
+    
     for(size_t x=0;x<vectorOfArrays.size();x++)
     {
         if(vectorOfArrays.at(x)[0].compare("ip") == 0)
@@ -163,7 +164,10 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
         }
     }
     std::cout << torrentPass << std::endl;
-    if (updateClientTorrents(ipa,port,event,infoHash,peerId,downloaded,left,uploaded,torrentPass))
+
+    annInfo = new AnnounceInfo(ipa, infoHash, peerId, torrentPass, event, port, downloaded, left, uploaded);
+
+    if (updateClientTorrents())
     {
         return infoHash;
     }
@@ -239,7 +243,7 @@ Torrent Database::getTorrent(std::string infoHash)
     return t;
 }
 
-bool Database::getUserId(std::string torrentPass, int *userId)
+bool Database::getUserId()
 {
     try
     {
@@ -258,11 +262,12 @@ bool Database::getUserId(std::string torrentPass, int *userId)
         con->setSchema(dbDatabaseName);
 
         pstmt = con->prepareStatement("SELECT id FROM user WHERE torrentPass = ?");
-        pstmt->setString(1, torrentPass);
+        pstmt->setString(1, annInfo->getTorrentPass());
         res = pstmt->executeQuery();
         if (res->next())
         {
-            *userId = res->getInt("id");
+            int userId = res->getInt("id");
+            annInfo->setUserId(userId);
             std::cout << "Valid User ID" << std::endl;
             delete pstmt;
             delete res;
@@ -287,7 +292,7 @@ bool Database::getUserId(std::string torrentPass, int *userId)
 
 }
 
-bool Database::userCanLeech(int userId)
+bool Database::userCanLeech()
 {
     try
     {
@@ -306,7 +311,7 @@ bool Database::userCanLeech(int userId)
         con->setSchema(dbDatabaseName);
 
         pstmt = con->prepareStatement("SELECT canLeech FROM user WHERE id = ?");
-        pstmt->setInt(1, userId);
+        pstmt->setInt(1, annInfo->getUserId());
         res = pstmt->executeQuery();
         if (res->next())
         {
@@ -387,7 +392,7 @@ std::vector<Peer*> Database::getPeers(std::string infoHash)
     }
 }
 
-bool Database::torrentExists(std::string infoHash, int uploaderUserId, int *torrentId, bool recursive)
+bool Database::torrentExists()
 {
     try
     {
@@ -406,17 +411,18 @@ bool Database::torrentExists(std::string infoHash, int uploaderUserId, int *torr
         con->setSchema(dbDatabaseName);
 
         pstmt = con->prepareStatement("SELECT id FROM torrent WHERE infoHash = ?");
-        pstmt->setString(1, infoHash);
+        pstmt->setString(1, annInfo->getInfoHash());
         res = pstmt->executeQuery();
         if (res->next())
         {
-            *torrentId = res->getInt("id");
+            int torrentId = res->getInt("id");
+            annInfo->setTorrentId(torrentId);
             std::cout << "Found existing torrent" << std::endl;
             return true;
         }
         else
         {
-            std::cout << "Torrent doesn't exist. Something went wrong. info hash:"<< infoHash << std::endl;
+            std::cout << "Torrent doesn't exist. Something went wrong. info hash: "<< annInfo->getInfoHash() << std::endl;
             errorMessage = "Torrent doesn't exist!";
             return false;
         }
@@ -430,7 +436,7 @@ bool Database::torrentExists(std::string infoHash, int uploaderUserId, int *torr
     }
 }
 
-bool Database::ipaIsBanned(std::string ipa)
+bool Database::ipaIsBanned()
 {
     try
     {
@@ -448,12 +454,12 @@ bool Database::ipaIsBanned(std::string ipa)
         // Connect to the MySQL test database
         con->setSchema(dbDatabaseName);
         pstmt = con->prepareStatement("SELECT isBanned FROM ipAddress WHERE ipa = ?");
-        pstmt->setString(1, ipa);
+        pstmt->setString(1, annInfo->getIpa());
         res = pstmt->executeQuery();
         if(res->next())
         {
             int isBanned = res->getInt("isBanned");
-            if (isBanned==0)
+            if (isBanned == 0)
             {
                 std::cout << "Valid IP Address" << std::endl;
                 return false;
@@ -481,15 +487,14 @@ bool Database::ipaIsBanned(std::string ipa)
     }
 }
 
-bool Database::updateClientTorrents(std::string ipa, int port, int event, std::string infoHash, 
-                                    std::string peerId, uint64_t downloaded, uint64_t left, uint64_t uploaded, std::string torrentPass)
+bool Database::updateClientTorrents()
 {
-    int userId, torrentId, clientId = -1;
-    if (getUserId(torrentPass, &userId) && userCanLeech(userId) && !ipaIsBanned(ipa))
+    //int userId, torrentId, clientId = -1;
+    if (getUserId() && userCanLeech() && !ipaIsBanned())
     {
-        if(torrentExists(infoHash, userId, &torrentId, true))
+        if(torrentExists())
         {
-            if (getClientId(peerId, ipa, port, userId, &clientId, true))
+            if (getClientId(true))
             {
                 try
                 {
@@ -525,8 +530,8 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                             "clientId = ? "
                     );
 
-                    pstmt2->setInt(1, torrentId);
-                    pstmt2->setInt(2, clientId);
+                    pstmt2->setInt(1, annInfo->getTorrentId());
+                    pstmt2->setInt(2, annInfo->getClientId());
 
                     int bonusPointIncrement = 0;
                     res = pstmt2->executeQuery();
@@ -547,52 +552,53 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     pstmt3->setInt(1, bonusPointIncrement);
                     if(pstmt3->executeUpdate() <= 0)
                     {
-                        std::cout << "Added " << bonusPointIncrement << " to user: " << clientId << std::endl;
+                        std::cout << "Added " << bonusPointIncrement << " to user: " << annInfo->getClientId() << std::endl;
                     }
 
                     pstmt = con->prepareStatement
                             (
                                 "UPDATE "
-                                "clientTorrents AS ct, "
-                                "client AS c, "
-                                "ipAddress AS ip, "
-                                "user AS u "
+                                        "clientTorrents AS ct, "
+                                        "client AS c, "
+                                        "ipAddress AS ip, "
+                                        "user AS u "
                                 "SET "
-                                "timeActive = IF(? = 2, timeActive, IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive)), "
-                                "isActive = IF(? < 3, 1, 0), "
-                                "announced = announced + 1, "
-                                "completed = IF(? = 1, completed + 1, completed), "
-                                "downloaded = ?, "
-                                "`left` = ?, "
-                                "uploaded = ?, "
-                                "lastEvent = ?, "
-                                "lastActivity = NOW(), "
-                                "clientId = ? "
-                                "WHERE torrentId = ? "
-                                "AND ct.clientId = c.id "
-                                "AND c.ipaId = ip.id "
-                                "AND ip.userId = u.id "
-                                "AND u.torrentPass = ?"
+                                        "timeActive = IF(? = 2, timeActive, IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive)), "
+                                        "isActive = IF(? < 3, 1, 0), "
+                                        "announced = announced + 1, "
+                                        "completed = IF(? = 1, completed + 1, completed), "
+                                        "downloaded = ?, "
+                                        "`left` = ?, "
+                                        "uploaded = ?, "
+                                        "lastEvent = ?, "
+                                        "lastActivity = NOW(), "
+                                        "clientId = ? "
+                                "WHERE "
+                                        "torrentId = ? "
+                                        "AND ct.clientId = c.id "
+                                        "AND c.ipaId = ip.id "
+                                        "AND ip.userId = u.id "
+                                        "AND u.torrentPass = ?"
                             );
-                    pstmt->setInt(1, event);
-                    pstmt->setInt(2, event);
-                    pstmt->setInt(3, event);
-                    pstmt->setUInt64(4, downloaded);
-                    pstmt->setUInt64(5, left);
-                    pstmt->setUInt64(6, uploaded);
-                    pstmt->setInt(7, event);
-                    pstmt->setInt(8, clientId);
-                    pstmt->setInt(9, torrentId);
-                    pstmt->setString(10, torrentPass);
+                    pstmt->setInt(1, annInfo->getEvent());
+                    pstmt->setInt(2, annInfo->getEvent());
+                    pstmt->setInt(3, annInfo->getEvent());
+                    pstmt->setUInt64(4, annInfo->getDownloaded());
+                    pstmt->setUInt64(5, annInfo->getLeft());
+                    pstmt->setUInt64(6, annInfo->getUploaded());
+                    pstmt->setInt(7, annInfo->getEvent());
+                    pstmt->setInt(8, annInfo->getClientId());
+                    pstmt->setInt(9, annInfo->getTorrentId());
+                    pstmt->setString(10, annInfo->getTorrentPass());
                     if (pstmt->executeUpdate() <= 0)
                     {
                         std::cout << "clientTorrent doesn't exist. Will create one. " << std::endl;
-                        if (!createClientTorrent(torrentId, clientId, downloaded, left, uploaded, event))
+                        if (!createClientTorrent())
                         {
                             return false;
                         }
                     }
-                    if (!updateUserTorrentTotals(clientId,torrentId, userId, downloaded, uploaded))
+                    if (!updateUserTorrentTotals())
                     {
                         return false;
                     }
@@ -611,7 +617,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
     return false;
 }
 
-bool Database::createClientTorrent(int torrentId, int clientId, uint64_t downloaded, uint64_t left, uint64_t uploaded, int event)
+bool Database::createClientTorrent()
 {
     try
     {
@@ -635,12 +641,12 @@ bool Database::createClientTorrent(int torrentId, int clientId, uint64_t downloa
                     "(torrentId, clientId, downloaded, `left`, uploaded, lastEvent, lastActivity) "
                     "VALUES (?, ?, ?, ?, ?, ?, NOW())"
                     );
-        pstmt->setInt(1, torrentId);
-        pstmt->setInt(2, clientId);
-        pstmt->setUInt64(3, downloaded);
-        pstmt->setUInt64(4, left);
-        pstmt->setUInt64(5, uploaded);
-        pstmt->setInt(6, event);
+        pstmt->setInt(1, annInfo->getTorrentId());
+        pstmt->setInt(2, annInfo->getClientId());
+        pstmt->setUInt64(3, annInfo->getDownloaded());
+        pstmt->setUInt64(4, annInfo->getLeft());
+        pstmt->setUInt64(5, annInfo->getUploaded());
+        pstmt->setInt(6, annInfo->getEvent());
         if (pstmt->executeQuery())
         {
             std::cout << "Created new clientTorrents " << std::endl;
@@ -661,7 +667,7 @@ bool Database::createClientTorrent(int torrentId, int clientId, uint64_t downloa
     }
 }
 
-bool Database::getIpaId(std::string ipa, int userId, int *ipaId, bool recursive)
+bool Database::getIpaId(bool recursive)
 {
     try
     {
@@ -680,11 +686,12 @@ bool Database::getIpaId(std::string ipa, int userId, int *ipaId, bool recursive)
         con->setSchema(dbDatabaseName);
 
         pstmt = con->prepareStatement("SELECT id FROM ipAddress WHERE ipa = ?");
-        pstmt->setString(1, ipa);
+        pstmt->setString(1, annInfo->getIpa());
         res = pstmt->executeQuery();
         if (res->next())
         {
-            *ipaId = res->getInt("id");
+            int ipaId = res->getInt("id");
+            annInfo->setIpaId(ipaId);
             std::cout << "Using known IP Address " << std::endl;
             return true;
         }
@@ -693,7 +700,7 @@ bool Database::getIpaId(std::string ipa, int userId, int *ipaId, bool recursive)
             std::cout << "Using unknown IP Address. Will insert into database " << std::endl;
             if (recursive)
             {
-                return createIpAddress(ipa, userId, ipaId);
+                return createIpAddress();
             }
             else
             {
@@ -710,10 +717,9 @@ bool Database::getIpaId(std::string ipa, int userId, int *ipaId, bool recursive)
     }
 }
 
-bool Database::getClientId(std::string peerId, std::string ipa, int port, int userId, int *clientId, bool recursive)
+bool Database::getClientId(bool recursive)
 {
-    int ipaId = -1;
-    if (getIpaId(ipa, userId, &ipaId, true))
+    if (getIpaId(true))
     {
         try
         {
@@ -732,13 +738,14 @@ bool Database::getClientId(std::string peerId, std::string ipa, int port, int us
             con->setSchema(dbDatabaseName);
 
             pstmt = con->prepareStatement("SELECT id FROM client WHERE peerId = ? AND port = ? AND ipaId = ?");
-            pstmt->setString(1, peerId);
-            pstmt->setInt(2, port);
-            pstmt->setInt(3, ipaId);
+            pstmt->setString(1, annInfo->getPeerId());
+            pstmt->setInt(2, annInfo->getPort());
+            pstmt->setInt(3, annInfo->getIpaId());
             res = pstmt->executeQuery();
             if (res->next())
             {
-                *clientId = res->getInt("id");
+                int clientId = res->getInt("id");
+                annInfo->setClientId(clientId);
                 std::cout << "Using a known client" << std::endl;
                 return true;
             }
@@ -747,7 +754,7 @@ bool Database::getClientId(std::string peerId, std::string ipa, int port, int us
                 std::cout << "Client unknown. Will try to update or create one. " << std::endl;
                 if (recursive)
                 {
-                    return updateClient(peerId, ipa, port, ipaId, userId, clientId);
+                    return updateClient();
                 }
                 else
                 {
@@ -772,7 +779,7 @@ bool Database::getClientId(std::string peerId, std::string ipa, int port, int us
     
 }
 
-bool Database::createIpAddress(std::string ipa, int userId, int *ipaId)
+bool Database::createIpAddress()
 {
     try
     {
@@ -791,12 +798,12 @@ bool Database::createIpAddress(std::string ipa, int userId, int *ipaId)
         con->setSchema(dbDatabaseName);
 
         pstmt = con->prepareStatement("INSERT INTO ipAddress (ipa, userId) VALUES (?, ?)");
-        pstmt->setString(1, ipa);
-        pstmt->setInt(2, userId);
+        pstmt->setString(1, annInfo->getIpa());
+        pstmt->setInt(2, annInfo->getUserId());
         if (pstmt->executeQuery())
         {
             std::cout << "IP Address added to Database. Will do recursive function to get ipaId" << std::endl;
-            return getIpaId(ipa, userId, ipaId, false);
+            return getIpaId(false);
         }
         else
         {
@@ -813,7 +820,7 @@ bool Database::createIpAddress(std::string ipa, int userId, int *ipaId)
     }
 }
 
-bool Database::createClient(std::string peerId, std::string ipa, int port, int ipaId, int userId, int *clientId)
+bool Database::createClient()
 {
     try
     {
@@ -832,13 +839,13 @@ bool Database::createClient(std::string peerId, std::string ipa, int port, int i
         con->setSchema(dbDatabaseName);
 
         pstmt = con->prepareStatement("INSERT IGNORE INTO client (peerId, port, ipaId) VALUES (?, ?, ?)");
-        pstmt->setString(1, peerId);
-        pstmt->setInt(2, port);
-        pstmt->setInt(3, ipaId);
+        pstmt->setString(1, annInfo->getPeerId());
+        pstmt->setInt(2, annInfo->getPort());
+        pstmt->setInt(3, annInfo->getIpaId());
         if (pstmt->executeQuery())
         {
             std::cout << "Added new client to the Database. Will do recursive function to get clientId" << std::endl;
-            return getClientId(peerId, ipa, port, userId, clientId, false);
+            return getClientId(false);
         }
         else
         {
@@ -855,7 +862,7 @@ bool Database::createClient(std::string peerId, std::string ipa, int port, int i
     }
 }
 
-bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, uint64_t downloaded, uint64_t uploaded)
+bool Database::updateUserTorrentTotals()
 {
     try
     {
@@ -880,16 +887,16 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
                     "WHERE torrentId = ? "
                     "AND clientId = ?"
                     );
-        pstmt->setInt(1, torrentId);
-        pstmt->setInt(2, clientId);
+        pstmt->setInt(1, annInfo->getTorrentId());
+        pstmt->setInt(2, annInfo->getClientId());
         res = pstmt->executeQuery();
         if(res->next())
         {
             uint64_t oldDownloaded = res->getUInt64("downloaded");
             uint64_t oldUploaded = res->getUInt64("uploaded");
 
-            uint64_t downloadedTotalIncrement = downloaded-oldDownloaded;
-            uint64_t uploadedTotalIncrement = uploaded-oldUploaded;
+            uint64_t downloadedTotalIncrement = annInfo->getDownloaded() - oldDownloaded;
+            uint64_t uploadedTotalIncrement = annInfo->getUploaded() - oldUploaded;
 
             //Checks if torrentId,userId combo exists before update
             sql::PreparedStatement *pstmt3 = con->prepareStatement
@@ -899,8 +906,8 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
                         "WHERE torrentId = ? "
                         "AND userId = ?"
                         );
-            pstmt3->setInt(1, torrentId);
-            pstmt3->setInt(2, userId);
+            pstmt3->setInt(1, annInfo->getTorrentId());
+            pstmt3->setInt(2, annInfo->getUserId()); 
             sql::ResultSet *res2 = pstmt3->executeQuery();
             if(res2->next())
             {
@@ -913,12 +920,12 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
                     //if(downloadedTotalIncrement <= 0)
                     if(downloadedTotalIncrement < 0)
                     {
-                        downloadedTotalIncrement = downloaded;
+                        downloadedTotalIncrement = annInfo->getDownloaded();
                     }
                     //if(uploadedTotalIncrement<=0)
                     if(uploadedTotalIncrement < 0)
                     {
-                        uploadedTotalIncrement = uploaded;
+                        uploadedTotalIncrement = annInfo->getUploaded();
                     }
                     std::string query = "UPDATE userTorrentTotals SET "
                                         "totalDownloaded = totalDownloaded + ?,"
@@ -929,8 +936,8 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
                     pstmt2 = con->prepareStatement(query);
                     pstmt2->setUInt64(1, downloadedTotalIncrement);
                     pstmt2->setUInt64(2, uploadedTotalIncrement);
-                    pstmt2->setInt(3, torrentId);
-                    pstmt2->setInt(4, userId);
+                    pstmt2->setInt(3, annInfo->getTorrentId());
+                    pstmt2->setInt(4, annInfo->getUserId());
                     pstmt2->executeUpdate();
                     std::cout << "Updated userTorrentTotals in the Database" << std::endl;
                     return true;
@@ -938,7 +945,7 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
             }
         }
         std::cout << "Failed to update userTorrentTotals in the Database. Will create one " << std::endl;
-        return createUserTorrentTotals(torrentId, userId, downloaded, uploaded);
+        return createUserTorrentTotals();
     }
     catch (sql::SQLException &e)
     {
@@ -949,7 +956,7 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
     }
 }
 
-bool Database::createUserTorrentTotals(int torrentId, int userId, uint64_t downloaded, uint64_t uploaded)
+bool Database::createUserTorrentTotals()
 {
     try
     {
@@ -968,10 +975,10 @@ bool Database::createUserTorrentTotals(int torrentId, int userId, uint64_t downl
         con->setSchema(dbDatabaseName);
 
         pstmt = con->prepareStatement("INSERT INTO userTorrentTotals (torrentId, userId, totalDownloaded, totalUploaded) VALUES (?, ?, ?, ?)");
-        pstmt->setInt(1, torrentId);
-        pstmt->setInt(2, userId);
-        pstmt->setUInt64(3, downloaded);
-        pstmt->setUInt64(4, uploaded);
+        pstmt->setInt(1, annInfo->getTorrentId());
+        pstmt->setInt(2, annInfo->getUserId());
+        pstmt->setUInt64(3, annInfo->getDownloaded());
+        pstmt->setUInt64(4, annInfo->getUploaded());
         if (pstmt->executeQuery())
         {
             std::cout << "Added new userTorrentTotals to the Database" << std::endl;
@@ -1004,7 +1011,7 @@ int Database::calcBonusPoints(uint64_t torrentSizeBytes, int newSeedMinutes, int
     return (torrentSizeGb * (0.025 + (0.6 * log(1 + totalSeedTimeDays) / (pow(numberOfSeeders, 0.6)))))*newSeedHours;
 }
 
-bool Database::updateClient(std::string peerId, std::string ipa, int port, int ipaId, int userId, int *clientId)
+bool Database::updateClient()
 {
     try
     {
@@ -1031,18 +1038,18 @@ bool Database::updateClient(std::string peerId, std::string ipa, int port, int i
                     "ipaId = ? AND "
                     "port = ?"
                 );
-        pstmt->setString(1, peerId);
-        pstmt->setInt(2, ipaId);
-        pstmt->setInt(3, port);
+        pstmt->setString(1, annInfo->getPeerId());
+        pstmt->setInt(2, annInfo->getIpaId());
+        pstmt->setInt(3, annInfo->getPort());
         if (pstmt->executeUpdate() > 0)
         {
             std::cout << "Updated Client. Will do recursive function to get clientId" << std::endl;
-            return getClientId(peerId, ipa, port, ipaId, userId, clientId, false);
+            return getClientId(false);
         }
         else
         {
             std::cout << "Failed to update Client. Will create one" << std::endl;
-            return createClient(peerId, ipa, port, ipaId, userId, clientId);
+            return createClient();
         }
     }
     catch (sql::SQLException &e)

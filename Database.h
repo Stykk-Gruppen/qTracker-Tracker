@@ -8,6 +8,7 @@
 #include <iomanip>
 #include "config.cpp"
 #include "Torrent.h"
+#include "AnnounceInfo.h"
 #include <math.h>
 
 #include <boost/algorithm/string.hpp>
@@ -31,7 +32,6 @@ public:
 	std::string insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
 	Torrent getTorrent(std::string infoHash);
 	std::string getErrorMessage();
-	//std::string errorMessage();
 private:
 	std::string decode(std::string str);
 	std::string urlDecode(std::string);
@@ -39,24 +39,22 @@ private:
 	std::vector<Peer*> getPeers(std::string infoHash);
 	int parseEventString(std::string);
 	int calcBonusPoints(uint64_t torrentSizeBytes, int newSeedMinutes, int numberOfSeeders, int totalSeedTimeMinutes);
-	bool getUserId(std::string torrentPass, int *userId);
-	bool userCanLeech(int userId);
-	bool getClientId(std::string peerId, std::string ipa, int port, int userId, int *clientId, bool recursive);
-	bool createClient(std::string peerId, std::string ipa, int port, int ipaId, int userId, int *clientId);
-	bool updateClient(std::string peerId, std::string ipa, int port, int ipaId, int userId, int *clientId);
-	bool updateTorrent(int torrentId, int event);
-	bool createTorrent(int uploaderUserId, std::string infoHash, int *torrentId);
-	bool torrentExists(std::string infoHash, int uploaderUserId, int *torrentId, bool recursive);
-	bool ipaIsBanned(std::string ipa);
-	bool getIpaId(std::string ipa, int userId, int *ipaId, bool recursive);
-	bool createIpAddress(std::string ipa, int userId, int *ipaId);
-	bool updateUserTorrentTotals(int clientId,int torrentId, int userId, uint64_t downloaded, uint64_t uploaded);
-	bool createUserTorrentTotals(int torrentId, int userId, uint64_t downloaded, uint64_t uploaded);
-	bool updateClientTorrents(std::string ipa, int port, int event, std::string infoHash,
-		std::string peerId, uint64_t downloaded, uint64_t left, uint64_t uploaded,
-		std::string torrentPass);
-	bool createClientTorrent(int torrentId, int clientId, uint64_t downloaded, uint64_t left, uint64_t uploaded, int event);
+	bool getUserId();
+	bool userCanLeech();
+	bool getClientId(bool recursive);
+	bool createClient();
+	bool updateClient();
+	bool updateTorrent();
+	bool torrentExists();
+	bool ipaIsBanned();
+	bool getIpaId(bool recursive);
+	bool createIpAddress();
+	bool updateUserTorrentTotals();
+	bool createUserTorrentTotals();
+	bool updateClientTorrents();
+	bool createClientTorrent();
 	std::string errorMessage = "";
+	AnnounceInfo *annInfo;
 };
 
 #endif
