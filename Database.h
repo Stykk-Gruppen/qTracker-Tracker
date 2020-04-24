@@ -8,6 +8,7 @@
 #include <iomanip>
 #include "config.cpp"
 #include "Torrent.h"
+#include <math.h>
 
 #include <boost/algorithm/string.hpp>
 

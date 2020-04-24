@@ -574,7 +574,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                             return false;
                         }
                     }
-                    if (!updateUserTorrentTotals(clientId,torrentId, userId, downloaded, uploaded))
+                    if (!updateUserTorrentTotals(clientId,torrentId, userId, downloaded, uploaded, ))
                     {
                         return false;
                     }
@@ -857,7 +857,7 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
 
         pstmt = con->prepareStatement
                 (
-                    "SELECT downloaded,uploaded FROM "
+                    "SELECT downloaded,uploaded, timeActive FROM "
                     "clientTorrents "
                     "WHERE torrentId = ? "
                     "AND clientId = ?"
@@ -1024,5 +1024,17 @@ bool Database::updateTorrent(int torrentId, int event)
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return false;
     }
+}
+
+int calcBonusPoints(int64_t torrentSizeBytes, int64_t newSeedSeconds, int64_t numberOfSeeders, int64_t totalSeedTimeMinutes)
+{
+    const int bytesInGB = 1000000000
+    const int secondsPerHour = 3600;
+    const int minutesInDay = 1400;
+    int64_t torrentSizeGb =  torrentSizeBytes / bytesInGB;
+    int64_t newSeedHours = newSeedSeconds / secondsInHour;
+    int64_t totalSeedTimeDays = totalSeedTimeMinutes / minutesInDay
+
+    return (torrentSizeGb * (0.025 + (0.6 * log(1 + totalSeedTimeDays) / (pow(numberOfSeeders, 0.6)))))*newSeedHours;
 }
 
