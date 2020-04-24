@@ -78,7 +78,7 @@ std::string Server::buildDictionary(std::string infoHash)
 			});
 	}
 	std::ostringstream stream;
-	if (errorMessage.empty())
+	if (!errorMessage.empty())
 	{
 		bencode::encode(stream, bencode::dict{
 		{"tracker_id", t.trackerId},
