@@ -555,6 +555,8 @@ bool Database::updateClientTorrents()
                         std::cout << "Added " << bonusPointIncrement << " to user: " << annInfo->getClientId() << std::endl;
                     }
 
+                    std::cout << "clientId: " annInfo->getClientId() << std::endl:
+
                     pstmt = con->prepareStatement
                             (
                                 "UPDATE "
