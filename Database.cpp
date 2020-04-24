@@ -171,7 +171,6 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
     {
         return NULL;
     }
-    
 }
 
 std::vector<int> Database::getTorrentData(std::string infoHash)
@@ -349,6 +348,7 @@ std::vector<Peer*> Database::getPeers(std::string infoHash)
                     "WHERE "
                     "t.id = ct.torrentId AND "
                     "ct.isActive = 1 AND "
+                    "(TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60) AND "
                     "ct.clientId = c.id AND "
                     "c.ipaId = ip.id AND "
                     "t.infoHash = ?"
@@ -414,7 +414,7 @@ bool Database::torrentExists(std::string infoHash, int uploaderUserId, int *torr
             {
                 return false;
             } */
-            std::cout << "Torrent doesn't exists. ABORTING!" << std::endl;
+            //std::cout << "Torrent doesn't exists. ABORTING!" << std::endl;
             return false;
         }
     }
@@ -545,27 +545,38 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
 
                     pstmt = con->prepareStatement
                             (
-                                "UPDATE clientTorrents SET "
-                                "timeActive = IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive), "
+                                "UPDATE "
+                                "clientTorrents AS ct, "
+                                "client AS c, "
+                                "ipAddress AS ip, "
+                                "user AS u "
+                                "SET "
+                                "timeActive = IF(? = 2, timeActive, IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive)), "
                                 "isActive = IF(? < 3, 1, 0), "
                                 "announced = announced + 1, "
-                                "completed = IF(? = 1, 1, 0), "
+                                "completed = IF(? = 1, completed + 1, completed), "
                                 "downloaded = ?, "
                                 "`left` = ?, "
                                 "uploaded = ?, "
                                 "lastEvent = ?, "
-                                "lastActivity = NOW() "
+                                "lastActivity = NOW(), "
+                                "clientId = ? "
                                 "WHERE torrentId = ? "
-                                "AND clientId = ?"
+                                "AND ct.clientId = c.id "
+                                "AND c.ipaId = ip.id "
+                                "AND ip.userId = u.id "
+                                "AND u.torrentPass = ?"
                             );
                     pstmt->setInt(1, event);
                     pstmt->setInt(2, event);
-                    pstmt->setUInt64(3, downloaded);
-                    pstmt->setUInt64(4, left);
-                    pstmt->setUInt64(5, uploaded);
-                    pstmt->setInt(6, event);
-                    pstmt->setInt(7, torrentId);
+                    pstmt->setInt(3, event);
+                    pstmt->setUInt64(4, downloaded);
+                    pstmt->setUInt64(5, left);
+                    pstmt->setUInt64(6, uploaded);
+                    pstmt->setInt(7, event);
                     pstmt->setInt(8, clientId);
+                    pstmt->setInt(9, torrentId);
+                    pstmt->setString(10, torrentPass);
                     if (pstmt->executeUpdate() <= 0)
                     {
                         std::cout << "clientTorrent doesn't exist. Will create one. " << std::endl;
@@ -578,7 +589,8 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     {
                         return false;
                     }
-                    return updateTorrent(torrentId, event);
+                    //return updateTorrent(torrentId, event);
+                    return true;
                 }
                 catch (sql::SQLException &e)
                 {
@@ -726,10 +738,11 @@ bool Database::getClientId(std::string peerId, std::string ipa, int port, int us
             }
             else
             {
-                std::cout << "Client unknown. Will try to create one. " << std::endl;
+                std::cout << "Client unknown. Will try to update or create one. " << std::endl;
                 if (recursive)
                 {
-                    return createClient(peerId, ipa, port, ipaId, userId, clientId);
+                    //return createClient(peerId, ipa, port, ipaId, userId, clientId);
+                    return updateClient(peerId, ipa, port, ipaId, userId, clientId);
                 }
                 else
                 {
@@ -997,14 +1010,15 @@ bool Database::updateTorrent(int torrentId, int event)
                 (
                     "UPDATE torrent "
                     "SET "
-                    "seeders = (SELECT SUM(isActive) FROM clientTorrents WHERE torrentId = ?), "
-                    "leechers = (SELECT SUM(isActive) FROM clientTorrents WHERE completed = 0 AND torrentId = ?), "
-                    "completed = IF(? = 1, completed + 1, completed) "
+                    "seeders = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE torrentId = ?), "
+                    "leechers = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE 'left' != 0 AND torrentId = ?), "
+                    "completed = (SELECT IFNULL(SUM(completed), 0) FROM clientTorrents WHERE torrentId = ?) "
                     "WHERE id = ?;"
-                    );
+                );
         pstmt->setInt(1, torrentId);
         pstmt->setInt(2, torrentId);
-        pstmt->setBoolean(3, isCompleted);
+        //pstmt->setBoolean(3, isCompleted);
+        pstmt->setInt(3, torrentId);
         pstmt->setInt(4, torrentId);
         if (pstmt->executeQuery())
         {
@@ -1026,3 +1040,52 @@ bool Database::updateTorrent(int torrentId, int event)
     }
 }
 
+bool Database::updateClient(std::string peerId, std::string ipa, int port, int ipaId, int userId, int *clientId)
+{
+    try
+    {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::PreparedStatement *pstmt;
+        sql::ResultSet *res;
+
+        // Create a connection
+        driver = get_driver_instance();
+        std::string t = "tcp://";
+        t += dbHostName;
+        t += ":3306";
+        con = driver->connect(t, dbUserName, dbPassword);
+        // Connect to the MySQL test database
+        con->setSchema(dbDatabaseName);
+
+        pstmt = con->prepareStatement
+                (
+                    "UPDATE client "
+                    "SET "
+                    "peerId = ? "
+                    "WHERE "
+                    "ipaId = ? AND "
+                    "port = ?"
+                );
+        pstmt->setString(1, peerId);
+        pstmt->setInt(2, ipaId);
+        pstmt->setInt(3, port);
+        if (pstmt->executeUpdate() > 0)
+        {
+            std::cout << "Updated Client" << std::endl;
+            return true;
+        }
+        else
+        {
+            std::cout << "Failed to update Client. Will create one" << std::endl;
+            return createClient(peerId, ipa, port, ipaId, userId, clientId);
+        }
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cout << "Database::updateClient ";
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        return false;
+    }
+}
