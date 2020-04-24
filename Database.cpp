@@ -194,7 +194,17 @@ std::vector<int> Database::getTorrentData(std::string infoHash)
         // Connect to the MySQL test database
         con->setSchema(dbDatabaseName);
 
-        pstmt = con->prepareStatement("SELECT leechers, seeders FROM torrent WHERE infoHash = ?");
+        pstmt = con->prepareStatement
+                (
+                    "SELECT "
+                        "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrent.id "
+                            "AND ct.left > 0) AS 'leechers', "
+                        "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrent.id "
+                            "AND (TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60)) AS 'seeders', "
+                    "FROM "
+                        "torrent "
+                    "WHERE "
+                        "infoHash = ?");
         pstmt->setString(1, infoHash);
         res = pstmt->executeQuery();
         if (res->next())
