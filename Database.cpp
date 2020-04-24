@@ -165,13 +165,11 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
     std::cout << torrentPass << std::endl;
     if (updateClientTorrents(ipa,port,event,infoHash,peerId,downloaded,left,uploaded,torrentPass))
     {
-        std::cout << "Returning infohash" << std::endl;
         return infoHash;
     }
     else
     {
-        std::cout << "Returning nULL infohash" << std::endl;
-        return NULL;
+        return "";
     }
 }
 
@@ -418,55 +416,14 @@ bool Database::torrentExists(std::string infoHash, int uploaderUserId, int *torr
         }
         else
         {
-            std::cout << "Torrent doesn't exoijawoidjodiajdists. Something went wrong. info hash:"<< infoHash << std::endl;
-            std::cout << "Should return false now!";
-            errorMessage = "Torrent doesn't exists!";
+            std::cout << "Torrent doesn't exist. Something went wrong. info hash:"<< infoHash << std::endl;
+            errorMessage = "Torrent doesn't exist!";
             return false;
         }
     }
     catch (sql::SQLException &e)
     {
         std::cout << "Database::torrentExists ";
-        std::cout << " (MySQL error code: " << e.getErrorCode();
-        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
-        return false;
-    }
-}
-
-bool Database::createTorrent(int uploaderUserId, std::string infoHash, int *torrentId)
-{
-    try
-    {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-        pstmt = con->prepareStatement("INSERT INTO torrent (uploader, infoHash) VALUES (?, ?)");
-        pstmt->setInt(1, uploaderUserId);
-        pstmt->setString(2, infoHash);
-        if (pstmt->executeQuery())
-        {
-            std::cout << "Created new Torrent. Will use recursive function to get torrentId" << std::endl;
-            return torrentExists(infoHash, uploaderUserId, torrentId, false);
-        }
-        else
-        {
-            std::cout << "Failed to create new Torrent" << std::endl;
-            return false;
-        }
-    }
-    catch (sql::SQLException &e)
-    {
-        std::cout << "Database::createTorrent ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return false;
@@ -536,7 +493,6 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
             {
                 try
                 {
-                    std::cout << "Trying" << std::endl;
                     sql::Driver *driver;
                     sql::Connection *con;
                     sql::PreparedStatement *pstmt;
@@ -569,30 +525,24 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                             "clientId = ? "
                     );
 
-                    std::cout << "After pstmt2 prepareStatement" << std::endl;
-
                     pstmt2->setInt(1, torrentId);
                     pstmt2->setInt(2, clientId);
 
                     int bonusPointIncrement = 0;
                     res = pstmt2->executeQuery();
-                    std::cout << "Right before res->next()" << std::endl;
                     if(res->next())
                     {
                         int totalTimeActive = res->getInt("timeActive");
                         int newSeedMinutes = res->getInt("newSeedMinutes");
                         int seeders = res->getInt("seeders");
                         uint64_t size = res->getUInt64("size");
-                        //bonusPointIncrement = calcBonusPoints(size, newSeedMinutes, seeders, totalTimeActive);
-                        bonusPointIncrement = 5;
+                        bonusPointIncrement = calcBonusPoints(size, newSeedMinutes, seeders, totalTimeActive);
                     }
 
-                    std::cout << "Before pstmt3 prepareStatement" << std::endl;
-
                     pstmt3 = con->prepareStatement
-                            (
-                                "UPDATE user SET points = points + ?"
-                            );
+                    (
+                        "UPDATE user SET points = points + ?"
+                    );
 
                     pstmt3->setInt(1, bonusPointIncrement);
                     if(pstmt3->executeUpdate() <= 0)
@@ -646,7 +596,6 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     {
                         return false;
                     }
-                    //return updateTorrent(torrentId, event);
                     return true;
                 }
                 catch (sql::SQLException &e)
@@ -655,10 +604,6 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     std::cout << " (MySQL error code: " << e.getErrorCode();
                     std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
                     return true;
-                }
-                catch(...)
-                {
-                    std::cout << "Unknown error occured";
                 }
             }
         }
@@ -1048,59 +993,6 @@ bool Database::createUserTorrentTotals(int torrentId, int userId, uint64_t downl
     }
 }
 
-bool Database::updateTorrent(int torrentId, int event)
-{
-    try
-    {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-        bool isCompleted = (event == 1) ? true : false;
-
-        pstmt = con->prepareStatement
-                (
-                    "UPDATE torrent "
-                    "SET "
-                    "seeders = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE torrentId = ?), "
-                    "leechers = (SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents WHERE 'left' != 0 AND torrentId = ?), "
-                    "completed = (SELECT IFNULL(SUM(completed), 0) FROM clientTorrents WHERE torrentId = ?) "
-                    "WHERE id = ?;"
-                );
-        pstmt->setInt(1, torrentId);
-        pstmt->setInt(2, torrentId);
-        //pstmt->setBoolean(3, isCompleted);
-        pstmt->setInt(3, torrentId);
-        pstmt->setInt(4, torrentId);
-        if (pstmt->executeQuery())
-        {
-            std::cout << "Torrent updated" << std::endl;
-            return true;
-        }
-        else
-        {
-            std::cout << "Failed to update Torrent" << std::endl;
-            return false;
-        }
-    }
-    catch (sql::SQLException &e)
-    {
-        std::cout << "Database::updateTorrent ";
-        std::cout << " (MySQL error code: " << e.getErrorCode();
-        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
-        return false;
-    }
-}
-
 int Database::calcBonusPoints(uint64_t torrentSizeBytes, int newSeedMinutes, int numberOfSeeders, int totalSeedTimeMinutes)
 {
     const int bytesInGB = 1000000000;
@@ -1165,7 +1057,5 @@ bool Database::updateClient(std::string peerId, std::string ipa, int port, int i
 
 std::string Database::getErrorMessage()
 {
-    std::cout << "Getting the error message" << std::endl;
-    std::cout << "Getting Error message: " << errorMessage << std::endl;
     return errorMessage;
 }
