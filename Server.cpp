@@ -78,15 +78,28 @@ std::string Server::buildDictionary(std::string infoHash)
 			});
 	}
 	std::ostringstream stream;
-	bencode::encode(stream, bencode::dict{
+	if (errorMessage)
+	{
+		bencode::encode(stream, bencode::dict{
 		{"tracker_id", t.trackerId},
 		{"interval", t.interval},
 		{"complete", t.seeders},
 		{"incomplete", t.leechers},
 		{"peers", peers},
 		{"warning_message", errorMessage}
-	});
-
+		});
+	}
+	else
+	{
+		bencode::encode(stream, bencode::dict{
+		{"tracker_id", t.trackerId},
+		{"interval", t.interval},
+		{"complete", t.seeders},
+		{"incomplete", t.leechers},
+		{"peers", peers}
+		});
+	}
+	
 	std::string streamString =  stream.str();
 	std::string answer = "";
 	answer += "HTTP/1.1 200 OK\r\n";

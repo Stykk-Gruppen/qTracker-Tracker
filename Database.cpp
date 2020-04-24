@@ -406,7 +406,7 @@ bool Database::torrentExists(std::string infoHash, int uploaderUserId, int *torr
         }
         else
         {
-            std::cout << "Torrent doesn't exists. Something went wrong. info hash:"<< infoHash << std::endl;
+            std::cout << "Torrent doesn't exoijawoidjodiajdists. Something went wrong. info hash:"<< infoHash << std::endl;
             std::cout << "Should return false now!";
             errorMessage = "Torrent doesn't exists!";
             return false;
@@ -563,7 +563,8 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     pstmt2->setInt(2, clientId);
 
                     int bonusPointIncrement = 0;
-                    res = pstmt->executeQuery();
+                    res = pstmt2->executeQuery();
+                    std::cout << "Right before res->next()" << std::endl;
                     if(res->next())
                     {
                         int totalTimeActive = res->getInt("timeActive");
