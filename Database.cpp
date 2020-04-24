@@ -236,6 +236,7 @@ Torrent Database::getTorrent(std::string infoHash)
     Torrent t(/*TrackerId*/1, /*seeders*/torrentData[0], /*leechers*/torrentData[1]);
 
     t.peers = getPeers(infoHash);
+    std::cout << t.peers[0]->peer_id << std::endl;
 
     return t;
 }
