@@ -747,7 +747,6 @@ bool Database::getClientId(std::string peerId, std::string ipa, int port, int us
                 std::cout << "Client unknown. Will try to update or create one. " << std::endl;
                 if (recursive)
                 {
-                    //return createClient(peerId, ipa, port, ipaId, userId, clientId);
                     return updateClient(peerId, ipa, port, ipaId, userId, clientId);
                 }
                 else
@@ -1037,8 +1036,8 @@ bool Database::updateClient(std::string peerId, std::string ipa, int port, int i
         pstmt->setInt(3, port);
         if (pstmt->executeUpdate() > 0)
         {
-            std::cout << "Updated Client" << std::endl;
-            return true;
+            std::cout << "Updated Client. Will do recursive function to get clientId" << std::endl;
+            return getClientId(peerId, ipa, port, ipaId, userId, clientId, false);
         }
         else
         {
