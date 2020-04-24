@@ -53,6 +53,7 @@ void Server::handle_client(int newsockfd)
 	std::string answer;
 	if(infoHash.empty())
 	{
+		std::cout << "Empty hash, calling errordictbuild" << std::endl;
 		answer = buildErrorDict();
 	}
 	else
@@ -67,7 +68,7 @@ std::string Server::buildErrorDict()
 {
 	std::ostringstream stream;
 	std::string errorMessage = db->getErrorMessage();
-
+	std::cout << "Got error message, building dict";
 	bencode::encode(stream, bencode::dict{
 		{"failure_reason", errorMessage}
 		});
