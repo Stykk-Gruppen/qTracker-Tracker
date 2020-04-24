@@ -31,6 +31,7 @@ public:
 	std::string insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
 	Torrent getTorrent(std::string infoHash);
 	std::string getErrorMessage();
+	//std::string errorMessage();
 private:
 	std::string decode(std::string str);
 	std::string urlDecode(std::string);
