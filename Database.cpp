@@ -404,20 +404,8 @@ bool Database::torrentExists(std::string infoHash, int uploaderUserId, int *torr
         }
         else
         {
-
-            
             std::cout << "Torrent doesn't exists. Something went wrong. info hash:"<< infoHash << std::endl;
             errorMessage = "Torrent doesn't exists!";
-
-           /* if (recursive)
-            {
-                return createTorrent(uploaderUserId, infoHash, torrentId);
-            }
-            else
-            {
-                return false;
-            } */
-            //std::cout << "Torrent doesn't exists. ABORTING!" << std::endl;
             return false;
         }
     }
