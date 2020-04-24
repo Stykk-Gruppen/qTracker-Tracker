@@ -19,7 +19,6 @@ Server::Server(int _port): port(_port)
 	listen(sockfd, 5);
 
 	clilen = sizeof(cli_addr);
-
 }
 
 void Server::central()
@@ -51,10 +50,44 @@ void Server::handle_client(int newsockfd)
 
 	std::cout << array_to_string(buffer, 4096);	
 	std::string infoHash = parseAndInsertMessage();
-	
-	std::string answer = buildDictionary(infoHash);
+	std::string answer;
+	if(infoHash.empty())
+	{
+		answer = buildErrorDict();
+	}
+	else
+	{
+		answer = buildDictionary(infoHash);
+	}
 	std::cout << "\n" << answer << "\n";
 	write(newsockfd, answer.c_str(), strlen(answer.c_str()));
+}
+
+std::string Server::buildErrorDict()
+{
+	std::ostringstream stream;
+	std::string errorMessage = db->getErrorMessage();
+
+	bencode::encode(stream, bencode::dict{
+		{"tracker_id", 0},
+		{"interval", 0},
+		{"complete", 0},
+		{"incomplete", 0},
+		{"peers", 0},
+		{"warning_message", errorMessage}
+		});
+
+	std::string streamString =  stream.str();
+	std::string answer = "";
+	answer += "HTTP/1.1 200 OK\r\n";
+	answer += "Content-length: ";
+	answer += to_string(strlen(streamString.c_str()));
+	answer += "\r\n";
+	answer += "Content-Type: text/plain\r\n";
+	answer += "Connection: close\r\n";
+	answer += "\r\n";
+	answer += streamString;
+	return answer;
 }
 
 std::string Server::buildDictionary(std::string infoHash)

@@ -43,6 +43,7 @@ private:
 	std::string getKeyFromURL(std::string);
 	std::string array_to_string(char* arr, int size);
 	std::string buildDictionary(std::string infoHash);
+	std::string buildErrorDict();
 };
 
 #endif
