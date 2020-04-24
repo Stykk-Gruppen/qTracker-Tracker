@@ -643,6 +643,10 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
                     return true;
                 }
+                catch(...)
+                {
+                    std::cout << "Unknown error occured";
+                }
             }
         }
     }
