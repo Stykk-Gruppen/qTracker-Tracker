@@ -55,7 +55,7 @@ private:
 		std::string peerId, uint64_t downloaded, uint64_t left, uint64_t uploaded,
 		std::string torrentPass);
 	bool createClientTorrent(int torrentId, int clientId, uint64_t downloaded, uint64_t left, uint64_t uploaded, int event);
-	std::string errorMessage;
+	std::string errorMessage = "";
 };
 
 #endif

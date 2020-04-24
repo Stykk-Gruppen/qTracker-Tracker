@@ -1165,5 +1165,7 @@ bool Database::updateClient(std::string peerId, std::string ipa, int port, int i
 
 std::string Database::getErrorMessage()
 {
+    std::cout << "Getting the error message" << std::endl;
+    std::cout << "Getting Error message: " << errorMessage << std::endl;
     return errorMessage;
 }

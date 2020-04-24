@@ -4,7 +4,7 @@ using namespace std;
 
 Server::Server(int _port): port(_port)
 {
-	Database *d = new Database();
+	Database *db = new Database();
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	bzero((char*)&serv_addr, sizeof(serv_addr));
