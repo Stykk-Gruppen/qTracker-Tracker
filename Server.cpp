@@ -61,7 +61,6 @@ std::string Server::buildDictionary(std::string infoHash)
 {
 	Torrent t = db->getTorrent(infoHash);
 	std::cout << "Got torrent t" << std::endl;
-	std::string errorMessage = db->getErrorMessage();
 	for (int i = 0; i < t.peers.size(); i++)
 	{
 		std::cout << std::endl << "peer_id: " << t.peers[i]->peer_id << std::endl
@@ -79,6 +78,7 @@ std::string Server::buildDictionary(std::string infoHash)
 			});
 	}
 	std::ostringstream stream;
+	std::string errorMessage = db->getErrorMessage();
 	if (!errorMessage.empty())
 	{
 		std::cout << "Error message is not empty" << std::endl;
