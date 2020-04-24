@@ -532,6 +532,8 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     sql::Driver *driver;
                     sql::Connection *con;
                     sql::PreparedStatement *pstmt;
+                    sql::PreparedStatement* pstmt2;
+                    sql::PreparedStatement* pstmt3;
                     sql::ResultSet *res;
 
                     // Create a connection
@@ -542,6 +544,47 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                     con = driver->connect(t, dbUserName, dbPassword);
                     // Connect to the MySQL test database
                     con->setSchema(dbDatabaseName);
+
+                    pstmt2 = con->prepareStatement
+                            (
+                                "SELECT "
+                                    "timeActive, " 
+                                    "TIMESTAMPDIFF(MINUTE, lastActivity, NOW()) AS 'newSeedMinutes', "
+                                    "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrentId "
+                                    "AND (TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60)) AS 'seeders', "
+                                    "(SELECT SUM(length) FROM torrentFiles AS tf WHERE tf.torrentId = torrentId) AS 'size' "
+                                "FROM "
+                                    "clientTorrents"
+                                "WHERE "
+                                    "torrentId = ? "
+                                "AND "
+                                    "clientId = ? "
+                            );
+
+                    pstmt2->setInt(1, torrentId);
+                    pstmt2->setInt(2, clientId);
+
+                    int bonusPointIncrement = 0;
+                    res = pstmt->executeQuery();
+                    if(res->next())
+                    {
+                        uint64_t totalTimeActive = res->getUInt64("timeActive");
+                        uint64_t newSeedMinutes = res->getUInt64("newSeedMinutes");
+                        int seeders = res->getInt("seeders");
+                        uint64_t size = res->getUInt64("size");
+                        bonusPointIncrement = calcBonusPoints(size, newSeedMinutes, seeders, totalTimeActive);
+                    }
+
+                    pstmt3 = con->prepareStatement
+                            (
+                                "UPDATE user SET points = points + ?"
+                            );
+
+                    pstmt3->setInt(1, bonusPointIncrement);
+                    if(pstmt->executeUpdate() <= 0)
+                    {
+                        std::cout << "Added " << bonusPointIncrement << " to user: " << clientId << std::endl;
+                    }
 
                     pstmt = con->prepareStatement
                             (
@@ -574,7 +617,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                             return false;
                         }
                     }
-                    if (!updateUserTorrentTotals(clientId,torrentId, userId, downloaded, uploaded, ))
+                    if (!updateUserTorrentTotals(clientId,torrentId, userId, downloaded, uploaded))
                     {
                         return false;
                     }
@@ -1026,14 +1069,14 @@ bool Database::updateTorrent(int torrentId, int event)
     }
 }
 
-int calcBonusPoints(int64_t torrentSizeBytes, int64_t newSeedSeconds, int64_t numberOfSeeders, int64_t totalSeedTimeMinutes)
+int Database::calcBonusPoints(int64_t torrentSizeBytes, int64_t newSeedMinutes, int64_t numberOfSeeders, int64_t totalSeedTimeMinutes)
 {
-    const int bytesInGB = 1000000000
-    const int secondsPerHour = 3600;
+    const int bytesInGB = 1000000000;
+    const int minutesInHour = 60;
     const int minutesInDay = 1400;
-    int64_t torrentSizeGb =  torrentSizeBytes / bytesInGB;
-    int64_t newSeedHours = newSeedSeconds / secondsInHour;
-    int64_t totalSeedTimeDays = totalSeedTimeMinutes / minutesInDay
+    double torrentSizeGb =  torrentSizeBytes / bytesInGB;
+    double newSeedHours = newSeedMinutes / minutesInHour;
+    double totalSeedTimeDays = totalSeedTimeMinutes / minutesInDay;
 
     return (torrentSizeGb * (0.025 + (0.6 * log(1 + totalSeedTimeDays) / (pow(numberOfSeeders, 0.6)))))*newSeedHours;
 }
