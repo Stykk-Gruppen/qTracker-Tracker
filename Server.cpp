@@ -69,12 +69,7 @@ std::string Server::buildErrorDict()
 	std::string errorMessage = db->getErrorMessage();
 
 	bencode::encode(stream, bencode::dict{
-		{"tracker_id", 0},
-		{"interval", 0},
-		{"complete", 0},
-		{"incomplete", 0},
-		{"peers", 0},
-		{"warning_message", errorMessage}
+		{"failure_reason", errorMessage}
 		});
 
 	std::string streamString =  stream.str();
