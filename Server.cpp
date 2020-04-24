@@ -68,7 +68,7 @@ std::string Server::buildErrorDict()
 {
 	std::ostringstream stream;
 	std::string errorMessage = db->getErrorMessage();
-	std::cout << "Got error message, building dict";
+	std::cout << "Got error message, building dict ";
 	bencode::encode(stream, bencode::dict{
 		{"failure_reason", errorMessage}
 		});
@@ -89,7 +89,6 @@ std::string Server::buildErrorDict()
 std::string Server::buildDictionary(std::string infoHash)
 {
 	Torrent t = db->getTorrent(infoHash);
-	std::cout << "Got torrent t" << std::endl;
 	for (int i = 0; i < t.peers.size(); i++)
 	{
 		std::cout << std::endl << "peer_id: " << t.peers[i]->peer_id << std::endl
@@ -107,30 +106,15 @@ std::string Server::buildDictionary(std::string infoHash)
 			});
 	}
 	std::ostringstream stream;
-	std::string errorMessage = db->getErrorMessage();
-	if (!errorMessage.empty())
-	{
-		std::cout << "Error message is not empty" << std::endl;
-		bencode::encode(stream, bencode::dict{
-		{"tracker_id", t.trackerId},
-		{"interval", t.interval},
-		{"complete", t.seeders},
-		{"incomplete", t.leechers},
-		{"peers", peers},
-		{"warning_message", errorMessage}
-		});
-	}
-	else
-	{
-		std::cout << "No error message" << std::endl;
-		bencode::encode(stream, bencode::dict{
-		{"tracker_id", t.trackerId},
-		{"interval", t.interval},
-		{"complete", t.seeders},
-		{"incomplete", t.leechers},
-		{"peers", peers}
-		});
-	}
+		
+	bencode::encode(stream, bencode::dict{
+	{"tracker_id", t.trackerId},
+	{"interval", t.interval},
+	{"complete", t.seeders},
+	{"incomplete", t.leechers},
+	{"peers", peers}
+	});
+	
 	
 	std::string streamString =  stream.str();
 	std::string answer = "";
