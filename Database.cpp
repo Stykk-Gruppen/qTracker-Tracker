@@ -585,7 +585,7 @@ bool Database::updateClientTorrents(std::string ipa, int port, int event, std::s
                             );
 
                     pstmt3->setInt(1, bonusPointIncrement);
-                    if(pstmt->executeUpdate() <= 0)
+                    if(pstmt3->executeUpdate() <= 0)
                     {
                         std::cout << "Added " << bonusPointIncrement << " to user: " << clientId << std::endl;
                     }
