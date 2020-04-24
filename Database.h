@@ -30,6 +30,7 @@ public:
 	Database();
 	std::string insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
 	Torrent getTorrent(std::string infoHash);
+	std::string getErrorMessage();
 private:
 	std::string decode(std::string str);
 	std::string urlDecode(std::string);
@@ -41,6 +42,7 @@ private:
 	bool userCanLeech(int userId);
 	bool getClientId(std::string peerId, std::string ipa, int port, int userId, int *clientId, bool recursive);
 	bool createClient(std::string peerId, std::string ipa, int port, int ipaId, int userId, int *clientId);
+	bool updateClient(std::string peerId, std::string ipa, int port, int ipaId, int userId, int *clientId);
 	bool updateTorrent(int torrentId, int event);
 	bool createTorrent(int uploaderUserId, std::string infoHash, int *torrentId);
 	bool torrentExists(std::string infoHash, int uploaderUserId, int *torrentId, bool recursive);
@@ -53,6 +55,7 @@ private:
 		std::string peerId, uint64_t downloaded, uint64_t left, uint64_t uploaded,
 		std::string torrentPass);
 	bool createClientTorrent(int torrentId, int clientId, uint64_t downloaded, uint64_t left, uint64_t uploaded, int event);
+	std::string errorMessage;
 };
 
 #endif

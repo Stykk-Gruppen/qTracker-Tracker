@@ -60,6 +60,7 @@ void Server::handle_client(int newsockfd)
 std::string Server::buildDictionary(std::string infoHash)
 {
 	Torrent t = db->getTorrent(infoHash);
+	std::string errorMessage = db->getErrorMessage();
 	for (int i = 0; i < t.peers.size(); i++)
 	{
 		std::cout << std::endl << "peer_id: " << t.peers[i]->peer_id << std::endl
@@ -82,7 +83,8 @@ std::string Server::buildDictionary(std::string infoHash)
 		{"interval", t.interval},
 		{"complete", t.seeders},
 		{"incomplete", t.leechers},
-		{"peers", peers}
+		{"peers", peers},
+		{"warning_message", errorMessage}
 	});
 
 	std::string streamString =  stream.str();
