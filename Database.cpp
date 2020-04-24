@@ -892,11 +892,13 @@ bool Database::updateUserTorrentTotals(int clientId,int torrentId, int userId, u
 
                     /* If user har restartet the same torrent we do not
                     want to update the total with a negative number */
-                    if(downloadedTotalIncrement<=0)
+                    //if(downloadedTotalIncrement <= 0)
+                    if(downloadedTotalIncrement < 0)
                     {
                         downloadedTotalIncrement = downloaded;
                     }
-                    if(uploadedTotalIncrement<=0)
+                    //if(uploadedTotalIncrement<=0)
+                    if(uploadedTotalIncrement < 0)
                     {
                         uploadedTotalIncrement = uploaded;
                     }
