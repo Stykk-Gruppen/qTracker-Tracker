@@ -259,6 +259,7 @@ bool Database::getUserId(std::string torrentPass, int *userId)
         else
         {
             std::cout << "Invalid User ID" << std::endl;
+            errorMessage = "User not found!";
             delete pstmt;
             delete res;
             return false;
@@ -303,6 +304,7 @@ bool Database::userCanLeech(int userId)
         else
         {
             std::cout << "User can't leech" << std::endl;
+            errorMessage = "You do not have the privilege to leech!";
             return false;
         }
     }
@@ -405,6 +407,7 @@ bool Database::torrentExists(std::string infoHash, int uploaderUserId, int *torr
 
             
             std::cout << "Torrent doesn't exists. Something went wrong. info hash:"<< infoHash << std::endl;
+            errorMessage = "Torrent doesn't exists!";
 
            /* if (recursive)
             {
@@ -498,6 +501,7 @@ bool Database::ipaIsBanned(std::string ipa)
             else
             {
                 std::cout << "Banned IP Address " << std::endl;
+                errorMessage = "You are using a banned IP Address!";
                 return true;
             }
         }
@@ -684,7 +688,7 @@ bool Database::getIpaId(std::string ipa, int userId, int *ipaId, bool recursive)
         }
         else
         {
-            std::cout << "Using unknown IP Adress. Will insert into database " << std::endl;
+            std::cout << "Using unknown IP Address. Will insert into database " << std::endl;
             if (recursive)
             {
                 return createIpAddress(ipa, userId, ipaId);
@@ -1088,4 +1092,9 @@ bool Database::updateClient(std::string peerId, std::string ipa, int port, int i
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return false;
     }
+}
+
+std::string Database::getErrorMessage()
+{
+    return getErrorMessage;
 }
