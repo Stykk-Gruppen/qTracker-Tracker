@@ -195,16 +195,17 @@ std::vector<int> Database::getTorrentData(std::string infoHash)
         con->setSchema(dbDatabaseName);
 
         pstmt = con->prepareStatement
-                (
-                    "SELECT "
-                        "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrent.id "
-                            "AND ct.left > 0) AS 'leechers', "
-                        "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrent.id "
-                            "AND (TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60)) AS 'seeders', "
-                    "FROM "
-                        "torrent "
-                    "WHERE "
-                        "infoHash = ?");
+        (
+            "SELECT "
+                    "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrent.id "
+                    "AND ct.left > 0) AS 'leechers', "
+                    "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrent.id "
+                    "AND (TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60)) AS 'seeders' "
+            "FROM "
+                    "torrent "
+            "WHERE "
+                "   infoHash = ?"
+        );
         pstmt->setString(1, infoHash);
         res = pstmt->executeQuery();
         if (res->next())
@@ -349,24 +350,24 @@ std::vector<Peer*> Database::getPeers(std::string infoHash)
         con->setSchema(dbDatabaseName);
 
         pstmt = con->prepareStatement
-                (
-                    "SELECT "
+        (
+            "SELECT "
                     "peerId,"
                     "ipa, "
                     "port "
-                    "FROM "
+            "FROM "
                     "torrent AS t, "
                     "clientTorrents AS ct, "
                     "client AS c, "
                     "ipAddress AS ip "
-                    "WHERE "
+            "WHERE "
                     "t.id = ct.torrentId AND "
                     "ct.isActive = 1 AND "
                     "(TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60) AND "
                     "ct.clientId = c.id AND "
                     "c.ipaId = ip.id AND "
                     "t.infoHash = ?"
-                    );
+        );
         pstmt->setString(1, infoHash);
         res = pstmt->executeQuery();
         while (res->next())

@@ -62,6 +62,7 @@ std::string Server::buildDictionary(std::string infoHash)
 	Torrent t = db->getTorrent(infoHash);
 	std::cout << "Got torrent t" << std::endl;
 	std::string errorMessage = db->getErrorMessage();
+	std::cout << t.peers[0].peer_id << std::endl;
 	for (int i = 0; i < t.peers.size(); i++)
 	{
 		std::cout << std::endl << "peer_id: " << t.peers[i]->peer_id << std::endl
