@@ -25,7 +25,7 @@ class Server
 {
 public:
 	Server(int _port);
-	
+	~Server();
 	void central();
 	void handle_client(int newsockfd);
 	

@@ -2,7 +2,6 @@
 
 Database::Database()
 {
-
     try
     {
         // Create a connection
@@ -18,40 +17,6 @@ Database::Database()
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
     }
-
-    /*
-    try {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::Statement *stmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        / Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-
-        stmt = con->createStatement();
-        res = stmt->executeQuery("SELECT username FROM user;");
-        while (res->next()) {
-            // Access column data by alias or column name
-            cout << res->getString("username") << endl;
-            // Access column data by numeric offset, 1 is the first column
-            cout << res->getString(1) << endl;
-        }
-        delete res;
-        delete stmt;
-        delete con;
-
-    } catch (sql::SQLException &e) {
-        cout << " (MySQL error code: " << e.getErrorCode();
-        cout << ", SQLState: " << e.getSQLState() << " )" << endl;
-    }
-    */
 }
 
 Database::~Database()
@@ -207,20 +172,6 @@ std::vector<int> Database::getTorrentData(std::string infoHash)
     std::vector<int> vec;
     try
     {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-
         pstmt = con->prepareStatement
         (
             "SELECT "
@@ -271,20 +222,6 @@ bool Database::getUserId()
 {
     try
     {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-
         pstmt = con->prepareStatement("SELECT id FROM user WHERE torrentPass = ?");
         pstmt->setString(1, annInfo->getTorrentPass());
         res = pstmt->executeQuery();
@@ -320,20 +257,6 @@ bool Database::userCanLeech()
 {
     try
     {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-
         pstmt = con->prepareStatement("SELECT canLeech FROM user WHERE id = ?");
         pstmt->setInt(1, annInfo->getUserId());
         res = pstmt->executeQuery();
@@ -363,20 +286,6 @@ std::vector<Peer*> Database::getPeers(std::string infoHash)
     std::vector<Peer*> peers;
     try
     {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-
         pstmt = con->prepareStatement
         (
             "SELECT "
@@ -420,20 +329,6 @@ bool Database::torrentExists()
 {
     try
     {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-
         pstmt = con->prepareStatement("SELECT id FROM torrent WHERE infoHash = ?");
         pstmt->setString(1, annInfo->getInfoHash());
         res = pstmt->executeQuery();
@@ -464,19 +359,6 @@ bool Database::ipaIsBanned()
 {
     try
     {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
         pstmt = con->prepareStatement("SELECT isBanned FROM ipAddress WHERE ipa = ?");
         pstmt->setString(1, annInfo->getIpa());
         res = pstmt->executeQuery();
@@ -522,24 +404,8 @@ bool Database::updateClientTorrents()
             {
                 try
                 {
-                    sql::Driver *driver;
-                    sql::Connection *con;
-                    sql::PreparedStatement *pstmt;
-                    sql::PreparedStatement* pstmt2;
-                    sql::PreparedStatement* pstmt3;
-                    sql::ResultSet *res;
-
-                    // Create a connection
-                    driver = get_driver_instance();
-                    std::string t = "tcp://";
-                    t += dbHostName;
-                    t += ":3306";
-                    con = driver->connect(t, dbUserName, dbPassword);
-                    // Connect to the MySQL test database
-                    con->setSchema(dbDatabaseName);
-
                     //Get new seed minutes for later bonus point calc:
-                    pstmt2 = con->prepareStatement
+                    pstmt = con->prepareStatement
                     (
                         "SELECT "
                             "TIMESTAMPDIFF(MINUTE, lastActivity, NOW()) AS 'newSeedMinutes' "
@@ -550,10 +416,10 @@ bool Database::updateClientTorrents()
                         "AND "
                             "clientId = ? "
                     );
-                    pstmt2->setInt(1, annInfo->getTorrentId());
-                    pstmt2->setInt(2, annInfo->getClientId());
+                    pstmt->setInt(1, annInfo->getTorrentId());
+                    pstmt->setInt(2, annInfo->getClientId());
                     int newSeedMinutes = 0;
-                    res = pstmt2->executeQuery();
+                    res = pstmt->executeQuery();
                     if(res->next())
                     {
                         newSeedMinutes = res->getInt("newSeedMinutes");
@@ -691,20 +557,6 @@ bool Database::createClientTorrent()
 {
     try
     {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-
         pstmt = con->prepareStatement
                 (
                     "INSERT INTO clientTorrents "
@@ -741,20 +593,6 @@ bool Database::getIpaId(bool recursive)
 {
     try
     {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-
         pstmt = con->prepareStatement("SELECT id FROM ipAddress WHERE ipa = ?");
         pstmt->setString(1, annInfo->getIpa());
         res = pstmt->executeQuery();
@@ -793,20 +631,6 @@ bool Database::getClientId(bool recursive)
     {
         try
         {
-            sql::Driver *driver;
-            sql::Connection *con;
-            sql::PreparedStatement *pstmt;
-            sql::ResultSet *res;
-
-            // Create a connection
-            driver = get_driver_instance();
-            std::string t = "tcp://";
-            t += dbHostName;
-            t += ":3306";
-            con = driver->connect(t, dbUserName, dbPassword);
-            // Connect to the MySQL test database
-            con->setSchema(dbDatabaseName);
-
             pstmt = con->prepareStatement("SELECT id FROM client WHERE peerId = ? AND port = ? AND ipaId = ?");
             pstmt->setString(1, annInfo->getPeerId());
             pstmt->setInt(2, annInfo->getPort());
@@ -853,20 +677,6 @@ bool Database::createIpAddress()
 {
     try
     {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-
         pstmt = con->prepareStatement("INSERT INTO ipAddress (ipa, userId) VALUES (?, ?)");
         pstmt->setString(1, annInfo->getIpa());
         pstmt->setInt(2, annInfo->getUserId());
@@ -894,20 +704,6 @@ bool Database::createClient()
 {
     try
     {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-
         pstmt = con->prepareStatement("INSERT IGNORE INTO client (peerId, port, ipaId) VALUES (?, ?, ?)");
         pstmt->setString(1, annInfo->getPeerId());
         pstmt->setInt(2, annInfo->getPort());
@@ -936,20 +732,6 @@ bool Database::updateUserTorrentTotals()
 {
     try
     {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-
         pstmt = con->prepareStatement
                 (
                     "SELECT downloaded,uploaded, timeActive FROM "
@@ -969,19 +751,19 @@ bool Database::updateUserTorrentTotals()
             uint64_t uploadedTotalIncrement = annInfo->getUploaded() - oldUploaded;
 
             //Checks if torrentId,userId combo exists before update
-            sql::PreparedStatement *pstmt3 = con->prepareStatement
+            pstmt = con->prepareStatement
                     (
                         "SELECT 1 FROM "
                         "userTorrentTotals "
                         "WHERE torrentId = ? "
                         "AND userId = ?"
                         );
-            pstmt3->setInt(1, annInfo->getTorrentId());
-            pstmt3->setInt(2, annInfo->getUserId()); 
-            sql::ResultSet *res2 = pstmt3->executeQuery();
-            if(res2->next())
+            pstmt->setInt(1, annInfo->getTorrentId());
+            pstmt->setInt(2, annInfo->getUserId()); 
+            res = pstmt->executeQuery();
+            if(res->next())
             {
-                int boolTest = res2->getInt("1");
+                int boolTest = res->getInt("1");
                 if(boolTest==1)
                 {
 
@@ -1002,13 +784,12 @@ bool Database::updateUserTorrentTotals()
                                         "totalUploaded = totalUploaded + ? "
                                         "WHERE torrentId = ? AND userId = ?;";
                     //std::cout << "query: \n" << query << std::endl;
-                    sql::PreparedStatement *pstmt2;
-                    pstmt2 = con->prepareStatement(query);
-                    pstmt2->setUInt64(1, downloadedTotalIncrement);
-                    pstmt2->setUInt64(2, uploadedTotalIncrement);
-                    pstmt2->setInt(3, annInfo->getTorrentId());
-                    pstmt2->setInt(4, annInfo->getUserId());
-                    pstmt2->executeUpdate();
+                    pstmt = con->prepareStatement(query);
+                    pstmt->setUInt64(1, downloadedTotalIncrement);
+                    pstmt->setUInt64(2, uploadedTotalIncrement);
+                    pstmt->setInt(3, annInfo->getTorrentId());
+                    pstmt->setInt(4, annInfo->getUserId());
+                    pstmt->executeUpdate();
                     std::cout << "Updated userTorrentTotals in the Database" << std::endl;
                     return true;
                 }               
@@ -1030,20 +811,6 @@ bool Database::createUserTorrentTotals()
 {
     try
     {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-
         pstmt = con->prepareStatement("INSERT INTO userTorrentTotals (torrentId, userId, totalDownloaded, totalUploaded) VALUES (?, ?, ?, ?)");
         pstmt->setInt(1, annInfo->getTorrentId());
         pstmt->setInt(2, annInfo->getUserId());
@@ -1085,20 +852,6 @@ bool Database::updateClient()
 {
     try
     {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::PreparedStatement *pstmt;
-        sql::ResultSet *res;
-
-        // Create a connection
-        driver = get_driver_instance();
-        std::string t = "tcp://";
-        t += dbHostName;
-        t += ":3306";
-        con = driver->connect(t, dbUserName, dbPassword);
-        // Connect to the MySQL test database
-        con->setSchema(dbDatabaseName);
-
         pstmt = con->prepareStatement
                 (
                     "UPDATE client "

@@ -21,6 +21,11 @@ Server::Server(int _port): port(_port)
 	clilen = sizeof(cli_addr);
 }
 
+Server::~Server()
+{
+	delete db;
+}
+
 void Server::central()
 {
 	int newsockfd;
