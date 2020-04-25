@@ -742,6 +742,10 @@ bool Database::updateUserTorrentTotals()
             uint64_t downloadedTotalIncrement = annInfo->getDownloaded() - oldDownloaded;
             uint64_t uploadedTotalIncrement = annInfo->getUploaded() - oldUploaded;
 
+            std::cout << "oldDownloaded: " << oldDownloaded << std::endl;
+            std::cout << "oldUploaded: " << oldUploaded << std::endl;
+            std::cout << "Downloaded INC: " << downloadedTotalIncrement << std::endl;
+            std::cout << "Uploaded INC: " << uploadedTotalIncrement << std::endl;
             //Checks if torrentId,userId combo exists before update
             pstmt = con->prepareStatement
                     (
@@ -755,20 +759,24 @@ bool Database::updateUserTorrentTotals()
             res = pstmt->executeQuery();
             if(res->next())
             {
+                std::cout << "About to do booltest" << std::endl;
                 int boolTest = res->getInt("1");
                 if(boolTest==1)
                 {
+                    std::cout << "Booltest PASSED!\n";
 
                     /* If user har restartet the same torrent we do not
                     want to update the total with a negative number */
                     //if(downloadedTotalIncrement <= 0)
                     if(downloadedTotalIncrement < 0)
                     {
+                        std::cout << "Down increment is less than zero\n"
                         downloadedTotalIncrement = annInfo->getDownloaded();
                     }
                     //if(uploadedTotalIncrement<=0)
                     if(uploadedTotalIncrement < 0)
                     {
+                        std::cout << "UP increment is less than zero"
                         uploadedTotalIncrement = annInfo->getUploaded();
                     }
                     std::string query = "UPDATE userTorrentTotals SET "
@@ -784,7 +792,15 @@ bool Database::updateUserTorrentTotals()
                     pstmt->executeUpdate();
                     std::cout << "Updated userTorrentTotals in the Database" << std::endl;
                     return true;
+                }
+                else
+                {
+                    std::cout << "Failed booltest\n";
                 }               
+            }
+            else
+            {
+                std::cout << "res-next() failed\n";
             }
         }
         std::cout << "Failed to update userTorrentTotals in the Database. Will create one " << std::endl;
