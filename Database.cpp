@@ -2,6 +2,19 @@
 
 Database::Database()
 {
+
+    try
+    {
+        // Create a connection
+        driver = get_driver_instance();
+        std::string t = "tcp://";
+        t += dbHostName;
+        t += ":3306";
+        con = driver->connect(t, dbUserName, dbPassword);
+        // Connect to the MySQL test database
+        con->setSchema(dbDatabaseName);
+    }
+
     /*
     try {
         sql::Driver *driver;
@@ -35,6 +48,15 @@ Database::Database()
         cout << ", SQLState: " << e.getSQLState() << " )" << endl;
     }
     */
+}
+
+Database::~Database()
+{
+    delete driver;
+    delete con;
+    delete pstmt;
+    delete res;
+    delete annInfo
 }
 
 int Database::parseEventString(std::string event)
@@ -513,6 +535,7 @@ bool Database::updateClientTorrents()
                     // Connect to the MySQL test database
                     con->setSchema(dbDatabaseName);
 
+                    //Bonus point-calc
                     pstmt2 = con->prepareStatement
                     (
                         "SELECT "
@@ -528,10 +551,8 @@ bool Database::updateClientTorrents()
                         "AND "
                             "clientId = ? "
                     );
-
                     pstmt2->setInt(1, annInfo->getTorrentId());
                     pstmt2->setInt(2, annInfo->getClientId());
-
                     int bonusPointIncrement = 0;
                     res = pstmt2->executeQuery();
                     if(res->next())
@@ -542,17 +563,17 @@ bool Database::updateClientTorrents()
                         uint64_t size = res->getUInt64("size");
                         bonusPointIncrement = calcBonusPoints(size, newSeedMinutes, seeders, totalTimeActive);
                     }
-
+                    //Update bonus points
                     pstmt3 = con->prepareStatement
                     (
                         "UPDATE user SET points = points + ?"
                     );
-
                     pstmt3->setInt(1, bonusPointIncrement);
                     if(pstmt3->executeUpdate() <= 0)
                     {
                         std::cout << "Added " << bonusPointIncrement << " to user: " << annInfo->getUserId() << std::endl;
                     }
+
 
                     pstmt = con->prepareStatement
                             (
@@ -614,6 +635,11 @@ bool Database::updateClientTorrents()
         }
     }
     return false;
+}
+
+bool updateUserBonusPoints(int userId, int incrementPoints)
+{
+
 }
 
 bool Database::createClientTorrent()

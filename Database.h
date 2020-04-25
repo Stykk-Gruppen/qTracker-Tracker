@@ -29,10 +29,18 @@ class Database
 {
 public:
 	Database();
+	~Database();
 	std::string insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
 	Torrent getTorrent(std::string infoHash);
 	std::string getErrorMessage();
+
 private:
+
+	sql::Driver* driver;
+	sql::Connection* con;
+	sql::PreparedStatement* pstmt;
+	sql::ResultSet* res;
+
 	std::string decode(std::string str);
 	std::string urlDecode(std::string);
 	std::vector<int> getTorrentData(std::string infoHash);
@@ -44,6 +52,7 @@ private:
 	bool getClientId(bool recursive);
 	bool createClient();
 	bool updateClient();
+	bool updateUserBonusPoints(int userId, int incrementPoints)
 	bool updateTorrent();
 	bool torrentExists();
 	bool ipaIsBanned();
