@@ -14,6 +14,10 @@ Database::Database()
         // Connect to the MySQL test database
         con->setSchema(dbDatabaseName);
     }
+    catch (sql::SQLException &e) {
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+    }
 
     /*
     try {
@@ -52,11 +56,10 @@ Database::Database()
 
 Database::~Database()
 {
-    delete driver;
     delete con;
     delete pstmt;
     delete res;
-    delete annInfo
+    delete annInfo;
 }
 
 int Database::parseEventString(std::string event)
@@ -535,15 +538,11 @@ bool Database::updateClientTorrents()
                     // Connect to the MySQL test database
                     con->setSchema(dbDatabaseName);
 
-                    //Bonus point-calc
+                    //Get new seed minutes for later bonus point calc:
                     pstmt2 = con->prepareStatement
                     (
                         "SELECT "
-                            "timeActive, " 
-                            "TIMESTAMPDIFF(MINUTE, lastActivity, NOW()) AS 'newSeedMinutes', "
-                            "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrentId "
-                            "AND (TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60)) AS 'seeders', "
-                            "(SELECT SUM(length) FROM torrentFiles AS tf WHERE tf.torrentId = torrentId) AS 'size' "
+                            "TIMESTAMPDIFF(MINUTE, lastActivity, NOW()) AS 'newSeedMinutes' "
                         "FROM "
                             "clientTorrents "
                         "WHERE "
@@ -553,25 +552,11 @@ bool Database::updateClientTorrents()
                     );
                     pstmt2->setInt(1, annInfo->getTorrentId());
                     pstmt2->setInt(2, annInfo->getClientId());
-                    int bonusPointIncrement = 0;
+                    int newSeedMinutes = 0;
                     res = pstmt2->executeQuery();
                     if(res->next())
                     {
-                        int totalTimeActive = res->getInt("timeActive");
-                        int newSeedMinutes = res->getInt("newSeedMinutes");
-                        int seeders = res->getInt("seeders") + 1;
-                        uint64_t size = res->getUInt64("size");
-                        bonusPointIncrement = calcBonusPoints(size, newSeedMinutes, seeders, totalTimeActive);
-                    }
-                    //Update bonus points
-                    pstmt3 = con->prepareStatement
-                    (
-                        "UPDATE user SET points = points + ?"
-                    );
-                    pstmt3->setInt(1, bonusPointIncrement);
-                    if(pstmt3->executeUpdate() <= 0)
-                    {
-                        std::cout << "Added " << bonusPointIncrement << " to user: " << annInfo->getUserId() << std::endl;
+                        newSeedMinutes = res->getInt("newSeedMinutes");
                     }
 
 
@@ -618,6 +603,10 @@ bool Database::updateClientTorrents()
                             return false;
                         }
                     }
+
+                    if(!updateUserBonusPoints(newSeedMinutes))
+                        std::cout << "An error occored within updateUserBonusPoints" << std::endl;
+
                     if (!updateUserTorrentTotals())
                     {
                         return false;
@@ -637,9 +626,65 @@ bool Database::updateClientTorrents()
     return false;
 }
 
-bool updateUserBonusPoints(int userId, int incrementPoints)
+bool Database::updateUserBonusPoints(int newSeedMinutes)
 {
-
+    try
+    {
+        //Bonus point-calc
+        std::cout << "About to gather information to calc bonus points" << std::endl;
+        pstmt = con->prepareStatement
+        (
+            "SELECT "
+                "timeActive, " 
+                "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrentId "
+                "AND (TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60)) AS 'seeders', "
+                "(SELECT SUM(length) FROM torrentFiles AS tf WHERE tf.torrentId = torrentId) AS 'size' "
+            "FROM "
+                "clientTorrents "
+            "WHERE "
+                "torrentId = ? "
+            "AND "
+                "clientId = ? "
+        );
+        pstmt->setInt(1, annInfo->getTorrentId());
+        pstmt->setInt(2, annInfo->getClientId());
+        double bonusPointIncrement = 0;
+        res = pstmt->executeQuery();
+        //If found, get calculations for BP
+        if(res->next())
+        {
+            int totalTimeActive = res->getInt("timeActive");
+            int seeders = res->getInt("seeders");
+            uint64_t size = res->getUInt64("size");
+            if(seeders != 0)
+            {
+                std::cout << "Found data, about to calc";
+                bonusPointIncrement = calcBonusPoints(size, newSeedMinutes, seeders, totalTimeActive);
+                std::cout << "Calculated bonusPoints: " << bonusPointIncrement << std::endl;
+            }
+        }
+        //Update bonus points
+        std::cout << "About to update db with userpoints" << std::endl;
+        pstmt = con->prepareStatement
+        (
+            "UPDATE user SET points = points + ? WHERE id = ?"
+        );
+        pstmt->setInt(1, bonusPointIncrement);
+        pstmt->setInt(2, annInfo->getUserId());
+        if(pstmt->executeUpdate() <= 0)
+        {
+            std::cout << "Added " << bonusPointIncrement << " to user: " << annInfo->getUserId() << std::endl;
+            return true;
+        }
+        return false;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cout << "Database::updateUserBonusPoints ";
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        return false;
+    }
 }
 
 bool Database::createClientTorrent()
@@ -1024,7 +1069,7 @@ bool Database::createUserTorrentTotals()
     }
 }
 
-int Database::calcBonusPoints(uint64_t torrentSizeBytes, int newSeedMinutes, int numberOfSeeders, int totalSeedTimeMinutes)
+double Database::calcBonusPoints(uint64_t torrentSizeBytes, int newSeedMinutes, int numberOfSeeders, int totalSeedTimeMinutes)
 {
     const double bytesInGB = 1000000000.0;
     const double minutesInHour = 60.0;

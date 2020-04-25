@@ -8,6 +8,11 @@ AnnounceInfo::AnnounceInfo(std::string ipa_, std::string infoHash_, std::string 
 
 }
 
+AnnounceInfo::~AnnounceInfo()
+{
+	
+}
+
 void AnnounceInfo::setTorrentId(int torrentId_)
 {
 	torrentId = torrentId_;
