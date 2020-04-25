@@ -527,7 +527,7 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
         (
             "UPDATE user SET points = points + ? WHERE id = ?"
         );
-        pstmt->setInt(1, bonusPointIncrement);
+        pstmt->setDouble(1, bonusPointIncrement);
         pstmt->setInt(2, annInfo->getUserId());
         if(pstmt->executeUpdate() <= 0)
         {
