@@ -770,13 +770,13 @@ bool Database::updateUserTorrentTotals()
                     //if(downloadedTotalIncrement <= 0)
                     if(downloadedTotalIncrement < 0)
                     {
-                        std::cout << "Down increment is less than zero\n"
+                        std::cout << "Down increment is less than zero\n";
                         downloadedTotalIncrement = annInfo->getDownloaded();
                     }
                     //if(uploadedTotalIncrement<=0)
                     if(uploadedTotalIncrement < 0)
                     {
-                        std::cout << "UP increment is less than zero"
+                        std::cout << "UP increment is less than zero";
                         uploadedTotalIncrement = annInfo->getUploaded();
                     }
                     std::string query = "UPDATE userTorrentTotals SET "
