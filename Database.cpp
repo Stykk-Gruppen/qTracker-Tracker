@@ -230,16 +230,12 @@ bool Database::getUserId()
             int userId = res->getInt("id");
             annInfo->setUserId(userId);
             std::cout << "Valid User ID" << std::endl;
-            delete pstmt;
-            delete res;
             return true;
         }
         else
         {
             std::cout << "Invalid User ID" << std::endl;
             errorMessage = "User not found!";
-            delete pstmt;
-            delete res;
             return false;
         }
     }
