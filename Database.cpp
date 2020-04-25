@@ -493,7 +493,6 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
     try
     {
         //Bonus point-calc
-        std::cout << "About to gather information to calc bonus points" << std::endl;
         pstmt = con->prepareStatement
         (
             "SELECT "
@@ -520,13 +519,10 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
             uint64_t size = res->getUInt64("size");
             if(seeders != 0)
             {
-                std::cout << "Found data, about to calc";
                 bonusPointIncrement = calcBonusPoints(size, newSeedMinutes, seeders, totalTimeActive);
-                std::cout << "Calculated bonusPoints: " << bonusPointIncrement << std::endl;
             }
         }
         //Update bonus points
-        std::cout << "About to update db with userpoints" << std::endl;
         pstmt = con->prepareStatement
         (
             "UPDATE user SET points = points + ? WHERE id = ?"
