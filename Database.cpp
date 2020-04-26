@@ -391,100 +391,92 @@ bool Database::ipaIsBanned()
 
 bool Database::updateClientTorrents()
 {
-    //int userId, torrentId, clientId = -1;
-    if (getUserId() && userCanLeech() && !ipaIsBanned())
+    if (getUserId() && userCanLeech() && !ipaIsBanned() && torrentExists() && getClientId(true) && setOldUploadAndDownload())
     {
-        if(torrentExists())
+        try
         {
-            if (getClientId(true))
+            //Get new seed minutes for later bonus point calc:
+            pstmt = con->prepareStatement
+            (
+                "SELECT "
+                        "TIMESTAMPDIFF(MINUTE, lastActivity, NOW()) AS 'newSeedMinutes' "
+                "FROM "
+                        "clientTorrents "
+                "WHERE "
+                        "torrentId = ? "
+                        "AND clientId = ?"
+            );
+            pstmt->setInt(1, annInfo->getTorrentId());
+            pstmt->setInt(2, annInfo->getClientId());
+            int newSeedMinutes = 0;
+            res = pstmt->executeQuery();
+            if(res->next())
             {
-                try
-                {
-                    //Get new seed minutes for later bonus point calc:
-                    pstmt = con->prepareStatement
+                newSeedMinutes = res->getInt("newSeedMinutes");
+            }
+
+            pstmt = con->prepareStatement
                     (
-                        "SELECT "
-                                "TIMESTAMPDIFF(MINUTE, lastActivity, NOW()) AS 'newSeedMinutes' "
-                        "FROM "
-                                "clientTorrents "
+                        "UPDATE "
+                                "clientTorrents AS ct, "
+                                "client AS c, "
+                                "ipAddress AS ip, "
+                                "user AS u "
+                        "SET "
+                                "timeActive = IF(? = 2, timeActive, IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive)), "
+                                "isActive = IF(? < 3, 1, 0), "
+                                "announced = announced + 1, "
+                                "completed = IF(? = 1, completed + 1, completed), "
+                                "downloaded = ?, "
+                                "`left` = ?, "
+                                "uploaded = ?, "
+                                "lastEvent = ?, "
+                                "lastActivity = NOW(), "
+                                "clientId = ? "
                         "WHERE "
                                 "torrentId = ? "
-                        "AND "
-                                "clientId = ? "
+                                "AND ct.clientId = c.id "
+                                "AND c.ipaId = ip.id "
+                                "AND ip.userId = u.id "
+                                "AND u.torrentPass = ?"
                     );
-                    pstmt->setInt(1, annInfo->getTorrentId());
-                    pstmt->setInt(2, annInfo->getClientId());
-                    int newSeedMinutes = 0;
-                    res = pstmt->executeQuery();
-                    if(res->next())
-                    {
-                        newSeedMinutes = res->getInt("newSeedMinutes");
-                    }
-
-
-                    pstmt = con->prepareStatement
-                            (
-                                "UPDATE "
-                                        "clientTorrents AS ct, "
-                                        "client AS c, "
-                                        "ipAddress AS ip, "
-                                        "user AS u "
-                                "SET "
-                                        "timeActive = IF(? = 2, timeActive, IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive)), "
-                                        "isActive = IF(? < 3, 1, 0), "
-                                        "announced = announced + 1, "
-                                        "completed = IF(? = 1, completed + 1, completed), "
-                                        "downloaded = ?, "
-                                        "`left` = ?, "
-                                        "uploaded = ?, "
-                                        "lastEvent = ?, "
-                                        "lastActivity = NOW(), "
-                                        "clientId = ? "
-                                "WHERE "
-                                        "torrentId = ? "
-                                        "AND ct.clientId = c.id "
-                                        "AND c.ipaId = ip.id "
-                                        "AND ip.userId = u.id "
-                                        "AND u.torrentPass = ?"
-                            );
-                    pstmt->setInt(1, annInfo->getEvent());
-                    pstmt->setInt(2, annInfo->getEvent());
-                    pstmt->setInt(3, annInfo->getEvent());
-                    pstmt->setUInt64(4, annInfo->getDownloaded());
-                    pstmt->setUInt64(5, annInfo->getLeft());
-                    pstmt->setUInt64(6, annInfo->getUploaded());
-                    pstmt->setInt(7, annInfo->getEvent());
-                    pstmt->setInt(8, annInfo->getClientId());
-                    pstmt->setInt(9, annInfo->getTorrentId());
-                    pstmt->setString(10, annInfo->getTorrentPass());
-                    if (pstmt->executeUpdate() <= 0)
-                    {
-                        std::cout << "clientTorrent doesn't exist. Will create one. " << std::endl;
-                        if (!createClientTorrent())
-                        {
-                            return false;
-                        }
-                    }
-
-                    if(!updateUserBonusPoints(newSeedMinutes))
-                        std::cout << "An error occurred within updateUserBonusPoints" << std::endl;
-
-                    if (!updateUserTorrentTotals())
-                    {
-                        return false;
-                    }
-                    return true;
-                }
-                catch (sql::SQLException &e)
+            pstmt->setInt(1, annInfo->getEvent());
+            pstmt->setInt(2, annInfo->getEvent());
+            pstmt->setInt(3, annInfo->getEvent());
+            pstmt->setUInt64(4, annInfo->getDownloaded());
+            pstmt->setUInt64(5, annInfo->getLeft());
+            pstmt->setUInt64(6, annInfo->getUploaded());
+            pstmt->setInt(7, annInfo->getEvent());
+            pstmt->setInt(8, annInfo->getClientId());
+            pstmt->setInt(9, annInfo->getTorrentId());
+            pstmt->setString(10, annInfo->getTorrentPass());
+            if (pstmt->executeUpdate() <= 0)
+            {
+                std::cout << "clientTorrent doesn't exist. Will create one. " << std::endl;
+                if (!createClientTorrent())
                 {
-                    std::cout << "Database::updateClientTorrents ";
-                    std::cout << " (MySQL error code: " << e.getErrorCode();
-                    std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
-                    return true;
+                    return false;
                 }
             }
+
+            if(!updateUserBonusPoints(newSeedMinutes))
+                std::cout << "An error occurred within updateUserBonusPoints" << std::endl;
+
+            if (!updateUserTorrentTotals())
+            {
+                return false;
+            }
+            return true;
+        }
+        catch (sql::SQLException &e)
+        {
+            std::cout << "Database::updateClientTorrents ";
+            std::cout << " (MySQL error code: " << e.getErrorCode();
+            std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+            return true;
         }
     }
+    //If any of the statements fails, the program will not respond with any peers
     return false;
 }
 
@@ -496,16 +488,15 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
         pstmt = con->prepareStatement
         (
             "SELECT "
-                "timeActive, " 
-                "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrentId "
-                "AND (TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60)) AS 'seeders', "
-                "(SELECT SUM(length) FROM torrentFiles AS tf WHERE tf.torrentId = torrentId) AS 'size' "
+                    "timeActive, " 
+                    "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrentId "
+                    "AND (TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60)) AS 'seeders', "
+                    "(SELECT SUM(length) FROM torrentFiles AS tf WHERE tf.torrentId = torrentId) AS 'size' "
             "FROM "
-                "clientTorrents "
+                    "clientTorrents "
             "WHERE "
-                "torrentId = ? "
-            "AND "
-                "clientId = ? "
+                    "torrentId = ? "
+                    "AND clientId = ?"
         );
         pstmt->setInt(1, annInfo->getTorrentId());
         pstmt->setInt(2, annInfo->getClientId());
@@ -724,84 +715,64 @@ bool Database::updateUserTorrentTotals()
 {
     try
     {
+        uint64_t downloadedTotalIncrement = annInfo->getDownloaded() - annInfo->getOldDownload();
+        uint64_t uploadedTotalIncrement = annInfo->getUploaded() - annInfo->getOldUpload();
+
+        std::cout << "oldDownloaded: " << annInfo->getOldDownload() << std::endl;
+        std::cout << "oldUploaded: " << annInfo->getOldUpload() << std::endl;
+        std::cout << "Downloaded INC: " << downloadedTotalIncrement << std::endl;
+        std::cout << "Uploaded INC: " << uploadedTotalIncrement << std::endl;
+        //Checks if torrentId,userId combo exists before update
         pstmt = con->prepareStatement
-                (
-                    "SELECT downloaded,uploaded, timeActive FROM "
-                    "clientTorrents "
+        (
+                    "SELECT 1 FROM "
+                    "userTorrentTotals "
                     "WHERE torrentId = ? "
-                    "AND clientId = ?"
-                    );
+                    "AND userId = ?"
+        );
         pstmt->setInt(1, annInfo->getTorrentId());
-        pstmt->setInt(2, annInfo->getClientId());
+        pstmt->setInt(2, annInfo->getUserId()); 
         res = pstmt->executeQuery();
         if(res->next())
         {
-            uint64_t oldDownloaded = res->getUInt64("downloaded");
-            uint64_t oldUploaded = res->getUInt64("uploaded");
-
-            uint64_t downloadedTotalIncrement = annInfo->getDownloaded() - oldDownloaded;
-            uint64_t uploadedTotalIncrement = annInfo->getUploaded() - oldUploaded;
-
-            std::cout << "oldDownloaded: " << oldDownloaded << std::endl;
-            std::cout << "oldUploaded: " << oldUploaded << std::endl;
-            std::cout << "Downloaded INC: " << downloadedTotalIncrement << std::endl;
-            std::cout << "Uploaded INC: " << uploadedTotalIncrement << std::endl;
-            //Checks if torrentId,userId combo exists before update
-            pstmt = con->prepareStatement
-                    (
-                        "SELECT 1 FROM "
-                        "userTorrentTotals "
-                        "WHERE torrentId = ? "
-                        "AND userId = ?"
-                        );
-            pstmt->setInt(1, annInfo->getTorrentId());
-            pstmt->setInt(2, annInfo->getUserId()); 
-            res = pstmt->executeQuery();
-            if(res->next())
+            std::cout << "About to do booltest" << std::endl;
+            int boolTest = res->getInt("1");
+            if(boolTest==1)
             {
-                std::cout << "About to do booltest" << std::endl;
-                int boolTest = res->getInt("1");
-                if(boolTest==1)
-                {
-                    std::cout << "Booltest PASSED!\n";
+                std::cout << "Booltest PASSED!\n";
 
-                    /* If user har restartet the same torrent we do not
-                    want to update the total with a negative number */
-                    //if(downloadedTotalIncrement <= 0)
-                    if(downloadedTotalIncrement < 0)
-                    {
-                        std::cout << "Down increment is less than zero\n";
-                        downloadedTotalIncrement = annInfo->getDownloaded();
-                    }
-                    //if(uploadedTotalIncrement<=0)
-                    if(uploadedTotalIncrement < 0)
-                    {
-                        std::cout << "UP increment is less than zero";
-                        uploadedTotalIncrement = annInfo->getUploaded();
-                    }
-                    std::string query = "UPDATE userTorrentTotals SET "
-                                        "totalDownloaded = totalDownloaded + ?,"
-                                        "totalUploaded = totalUploaded + ? "
-                                        "WHERE torrentId = ? AND userId = ?;";
-                    //std::cout << "query: \n" << query << std::endl;
-                    pstmt = con->prepareStatement(query);
-                    pstmt->setUInt64(1, downloadedTotalIncrement);
-                    pstmt->setUInt64(2, uploadedTotalIncrement);
-                    pstmt->setInt(3, annInfo->getTorrentId());
-                    pstmt->setInt(4, annInfo->getUserId());
-                    pstmt->executeUpdate();
-                    std::cout << "Updated userTorrentTotals in the Database" << std::endl;
-                    return true;
-                }
-                else
+                /* If user har restartet the same torrent we do not
+                want to update the total with a negative number */
+                //if(downloadedTotalIncrement <= 0)
+                if(downloadedTotalIncrement < 0)
                 {
-                    std::cout << "Failed booltest\n";
-                }               
+                    std::cout << "Down increment is less than zero\n";
+                    downloadedTotalIncrement = annInfo->getDownloaded();
+                }
+                //if(uploadedTotalIncrement<=0)
+                if(uploadedTotalIncrement < 0)
+                {
+                    std::cout << "UP increment is less than zero";
+                    uploadedTotalIncrement = annInfo->getUploaded();
+                }
+                std::string query = "UPDATE userTorrentTotals SET "
+                                    "totalDownloaded = totalDownloaded + ?,"
+                                    "totalUploaded = totalUploaded + ? "
+                                    "WHERE torrentId = ? AND userId = ?;";
+                //std::cout << "query: \n" << query << std::endl;
+                pstmt = con->prepareStatement(query);
+                pstmt->setUInt64(1, downloadedTotalIncrement);
+                pstmt->setUInt64(2, uploadedTotalIncrement);
+                pstmt->setInt(3, annInfo->getTorrentId());
+                pstmt->setInt(4, annInfo->getUserId());
+                pstmt->executeUpdate();
+                std::cout << "Updated userTorrentTotals in the Database" << std::endl;
+                return true;
             }
             else
             {
-                std::cout << "res-next() failed\n";
-            }
+                std::cout << "Failed booltest\n";
+            }               
         }
         std::cout << "Failed to update userTorrentTotals in the Database. Will create one " << std::endl;
         return createUserTorrentTotals();
@@ -895,4 +866,45 @@ bool Database::updateClient()
 std::string Database::getErrorMessage()
 {
     return errorMessage;
+}
+
+bool Database::setOldUploadAndDownload()
+{
+    try
+    {
+        pstmt = con->prepareStatement
+        (
+            "SELECT "
+                    "uploaded, downloaded "
+            "FROM "
+                    "clientTorrents "
+            "WHERE "
+                    "torrentId = ? "
+                    "AND clientId = ?"
+        );
+        pstmt->setInt(1, annInfo->getTorrentId());
+        pstmt->setInt(2, annInfo->getClientId());
+        res = pstmt->executeQuery();
+        if (res->next())
+        {
+            annInfo->setOldUpload(res->getUInt64("uploaded"));
+            annInfo->setOldDownload(res->getUInt64("downloaded"));
+        }
+        else
+        {
+            std::cout << "Could not retrieve old upload and download values. Perhaps this is their first announce?" << std::endl;
+            //The default old upload and download is set to 0, so this should not be a problem.
+        }
+        //Will go forward with the code whether or not an old record exists.
+        return true;
+    }
+    catch (sql::SQLException &e)
+    {
+        std::cout << "Database::setOldUploadAndDownload ";
+        std::cout << " (MySQL error code: " << e.getErrorCode();
+        std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        //It is important to return false, as if a record actually exists and the old values are set to 0, the gain in 
+        //total download/upload could be enormous. 
+        return false;
+    }
 }

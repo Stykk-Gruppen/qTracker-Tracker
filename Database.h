@@ -35,11 +35,12 @@ public:
 	std::string getErrorMessage();
 
 private:
-
 	sql::Driver* driver;
 	sql::Connection* con;
 	sql::PreparedStatement* pstmt;
 	sql::ResultSet* res;
+	std::string errorMessage = "";
+	AnnounceInfo* annInfo;
 
 	std::string decode(std::string str);
 	std::string urlDecode(std::string);
@@ -62,8 +63,7 @@ private:
 	bool createUserTorrentTotals();
 	bool updateClientTorrents();
 	bool createClientTorrent();
-	std::string errorMessage = "";
-	AnnounceInfo *annInfo;
+	bool setOldUploadAndDownload();
 };
 
 #endif

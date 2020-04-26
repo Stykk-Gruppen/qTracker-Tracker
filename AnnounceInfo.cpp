@@ -33,6 +33,16 @@ void AnnounceInfo::setIpaId(int ipaId_)
 	ipaId = ipaId_;
 }
 
+void AnnounceInfo::setOldUpload(uint64_t oldUpload_)
+{
+	oldUpload = oldUpload_;
+}
+
+void AnnounceInfo::setOldDownload(uint64_t oldDownload_)
+{
+	oldDownload = oldDownload_;
+}
+
 std::string AnnounceInfo::getTorrentPass()
 {
 	return torrentPass;
@@ -96,4 +106,14 @@ uint64_t AnnounceInfo::getUploaded()
 uint64_t AnnounceInfo::getLeft()
 {
 	return left;
+}
+
+uint64_t AnnounceInfo::getOldUpload()
+{
+	return oldUpload;
+}
+
+uint64_t AnnounceInfo::getOldDownload()
+{
+	return oldDownload;
 }

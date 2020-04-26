@@ -13,6 +13,8 @@ public:
 	void setClientId(int clientId_);
 	void setUserId(int userId_);
 	void setIpaId(int ipaId_);
+	void setOldUpload(uint64_t oldUpload_);
+	void setOldDownload(uint64_t oldDownload_);
 	std::string getTorrentPass();
 	std::string getIpa();
 	std::string getInfoHash();
@@ -26,6 +28,8 @@ public:
 	uint64_t getDownloaded();
 	uint64_t getUploaded();
 	uint64_t getLeft();
+	uint64_t getOldUpload();
+	uint64_t getOldDownload();
 private:
 	std::string ipa;
 	std::string infoHash;
@@ -42,6 +46,8 @@ private:
 	int torrentId;
 	int userId;
 	int ipaId;
+	uint64_t oldUpload = 0;
+	uint64_t oldDownload = 0;
 };
 
 #endif
