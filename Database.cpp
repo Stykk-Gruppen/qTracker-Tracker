@@ -404,13 +404,13 @@ bool Database::updateClientTorrents()
                     pstmt = con->prepareStatement
                     (
                         "SELECT "
-                            "TIMESTAMPDIFF(MINUTE, lastActivity, NOW()) AS 'newSeedMinutes' "
+                                "TIMESTAMPDIFF(MINUTE, lastActivity, NOW()) AS 'newSeedMinutes' "
                         "FROM "
-                            "clientTorrents "
+                                "clientTorrents "
                         "WHERE "
-                            "torrentId = ? "
+                                "torrentId = ? "
                         "AND "
-                            "clientId = ? "
+                                "clientId = ? "
                     );
                     pstmt->setInt(1, annInfo->getTorrentId());
                     pstmt->setInt(2, annInfo->getClientId());
@@ -467,7 +467,7 @@ bool Database::updateClientTorrents()
                     }
 
                     if(!updateUserBonusPoints(newSeedMinutes))
-                        std::cout << "An error occored within updateUserBonusPoints" << std::endl;
+                        std::cout << "An error occurred within updateUserBonusPoints" << std::endl;
 
                     if (!updateUserTorrentTotals())
                     {
@@ -529,7 +529,7 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
         );
         pstmt->setDouble(1, bonusPointIncrement);
         pstmt->setInt(2, annInfo->getUserId());
-        if(pstmt->executeUpdate() <= 0)
+        if(pstmt->executeUpdate() > 0)
         {
             std::cout << "Added " << bonusPointIncrement << " to user: " << annInfo->getUserId() << std::endl;
             return true;
