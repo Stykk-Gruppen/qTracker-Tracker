@@ -28,7 +28,7 @@
 class Database
 {
 public:
-	Database();
+	Database(Logger*);
 	~Database();
 	std::string insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
 	Torrent getTorrent(std::string infoHash);

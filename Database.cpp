@@ -1,8 +1,7 @@
 #include "Database.h"
 
-Database::Database()
+Database::Database(Logger* _logger): logger(_logger)
 {
-    logger = new Logger();
     try
     {
 
@@ -17,8 +16,9 @@ Database::Database()
     }
     catch (sql::SQLException &e) {
         logger->timestamp();
-        //*logger << " (MySQL error code: " << e.getErrorCode();
-        //*logger << ", SQLState: " << e.getSQLState() << " )" << "\n";
+       // std::to_string(3.1415926)
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
     }
@@ -26,7 +26,6 @@ Database::Database()
 
 Database::~Database()
 {
-    delete logger;
     delete con;
     delete pstmt;
     delete res;
@@ -51,6 +50,7 @@ int Database::parseEventString(std::string event)
     else
     {
         std::cout << "event = Bump (0)" << "\n";
+        *logger << "event = Bump (0)" << "\n";
         return 0;
     }
 }
@@ -58,6 +58,7 @@ int Database::parseEventString(std::string event)
 std::string Database::decode(std::string str)
 {
     std::cout << "\n" << "-------- (Stian Decoder) --------" << "\n" << "\n";
+    *logger << "\n" << "-------- (Stian Decoder) --------" << "\n" << "\n";
     std::string decoded = "";
     for (int i = 0; i < str.size(); i++)
     {
@@ -66,7 +67,10 @@ std::string Database::decode(std::string str)
             std::ostringstream os;
             os << std::hex << (int)str[i];
             decoded += os.str();
+            std::string s;
+            s.push_back(str[i]);
             std::cout << str[i] << " ---> " << os.str() << "\n";
+            *logger << s << " ---> " << os.str() << "\n";
         }
         else
         {
@@ -78,6 +82,9 @@ std::string Database::decode(std::string str)
     std::cout << "Size: " << decoded.size() << "\n";
     std::cout << decoded << "\n";
     std::cout << "\n" << "-------- (Stian Decoder) --------" << "\n" << "\n";
+    *logger << "Size: " << std::to_string(decoded.size()) << "\n";
+    *logger << decoded << "\n";
+    *logger << "\n" << "-------- (Stian Decoder) --------" << "\n" << "\n";
     return decoded;
 }
 
@@ -99,7 +106,6 @@ std::string Database::urlDecode(std::string urlEncodedString)
 //Return infoHash if completed
 std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOfArrays)
 {
-    logger->timestamp();
     //*logger <<
     std::string ipa;
     std::string infoHash;
@@ -126,8 +132,10 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
         if(vectorOfArrays.at(x)[0].compare("event") == 0)
         {
             std::cout << "event = " << vectorOfArrays.at(x)[1];
+            *logger << "event = " << vectorOfArrays.at(x)[1];
             event = parseEventString(vectorOfArrays.at(x)[1]);
             std::cout << " (" << event << ")" << "\n";
+            *logger << " (" << std::to_string(event) << ")" << "\n";
             continue;
         }
         if(vectorOfArrays.at(x)[0].compare("info_hash") == 0)
@@ -162,6 +170,7 @@ std::string Database::insertClientInfo(const std::vector<std::string*> &vectorOf
         }
     }
     std::cout << torrentPass << "\n";
+    *logger << torrentPass << "\n";
 
     annInfo = new AnnounceInfo(ipa, infoHash, peerId, torrentPass, event, port, downloaded, left, uploaded);
 
@@ -203,11 +212,15 @@ std::vector<int> Database::getTorrentData(std::string infoHash)
         else
         {
             std::cout << "Failed to get torrent Id" << "\n";
+            *logger << "Failed to get torrent Id" << "\n";
             return vec;
         }
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::getTorrentId ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::getTorrentId ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -238,17 +251,22 @@ bool Database::getUserId()
             int userId = res->getInt("id");
             annInfo->setUserId(userId);
             std::cout << "Valid User ID" << "\n";
+            *logger << "Valid User ID" << "\n";
             return true;
         }
         else
         {
             std::cout << "Invalid User ID" << "\n";
+            *logger << "Invalid User ID" << "\n";
             errorMessage = "User not found!";
             return false;
         }
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::getUserId ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::getUserId ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -266,11 +284,13 @@ bool Database::userCanLeech()
         res = pstmt->executeQuery();
         if (res->next())
         {
+            *logger << "User can leech" << "\n";
             std::cout << "User can leech" << "\n";
             return (res->getInt("canLeech")) ? true : false;
         }
         else
         {
+            *logger << "User can't leech" << "\n";
             std::cout << "User can't leech" << "\n";
             errorMessage = "You do not have the privilege to leech!";
             return false;
@@ -278,6 +298,9 @@ bool Database::userCanLeech()
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::userCanLeech ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::userCanLeech ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -322,6 +345,9 @@ std::vector<Peer*> Database::getPeers(std::string infoHash)
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::getPeers ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::getPeers ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -340,11 +366,13 @@ bool Database::torrentExists()
         {
             int torrentId = res->getInt("id");
             annInfo->setTorrentId(torrentId);
+            *logger << "Found existing torrent" << "\n";
             std::cout << "Found existing torrent" << "\n";
             return true;
         }
         else
         {
+            *logger << "Torrent doesn't exist. Something went wrong. info hash: "<< annInfo->getInfoHash() << "\n";
             std::cout << "Torrent doesn't exist. Something went wrong. info hash: "<< annInfo->getInfoHash() << "\n";
             errorMessage = "Torrent doesn't exist!";
             return false;
@@ -352,6 +380,9 @@ bool Database::torrentExists()
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::torrentExists ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::torrentExists ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -371,11 +402,13 @@ bool Database::ipaIsBanned()
             int isBanned = res->getInt("isBanned");
             if (isBanned == 0)
             {
+                *logger << "Valid IP Address" << "\n";
                 std::cout << "Valid IP Address" << "\n";
                 return false;
             }
             else
             {
+                *logger << "Banned IP Address " << "\n";
                 std::cout << "Banned IP Address " << "\n";
                 errorMessage = "You are using a banned IP Address!";
                 return true;
@@ -383,6 +416,7 @@ bool Database::ipaIsBanned()
         }
         else
         {
+            *logger << "IP Address does not exist, so user is not banned" << "\n";
             std::cout << "IP Address does not exist, so user is not banned" << "\n";
             return false;
         }
@@ -390,6 +424,9 @@ bool Database::ipaIsBanned()
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::ipaIsBanned ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::ipaIsBanned ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -461,6 +498,7 @@ bool Database::updateClientTorrents()
             if (pstmt->executeUpdate() <= 0)
             {
                 std::cout << "clientTorrent doesn't exist. Will create one. " << "\n";
+                *logger << "clientTorrent doesn't exist. Will create one. " << "\n";
                 if (!createClientTorrent())
                 {
                     return false;
@@ -468,6 +506,7 @@ bool Database::updateClientTorrents()
             }
 
             if(!updateUserBonusPoints(newSeedMinutes))
+                *logger << "An error occurred within updateUserBonusPoints" << "\n";
                 std::cout << "An error occurred within updateUserBonusPoints" << "\n";
 
             if (!updateUserTorrentTotals())
@@ -478,6 +517,9 @@ bool Database::updateClientTorrents()
         }
         catch (sql::SQLException &e)
         {
+            *logger << "Database::updateClientTorrents ";
+            *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+            *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
             std::cout << "Database::updateClientTorrents ";
             std::cout << " (MySQL error code: " << e.getErrorCode();
             std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -531,12 +573,16 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
         if(pstmt->executeUpdate() > 0)
         {
             std::cout << "Added " << bonusPointIncrement << " to user: " << annInfo->getUserId() << "\n";
+            *logger << "Added " << std::to_string(bonusPointIncrement) << " to user: " << std::to_string(annInfo->getUserId()) << "\n";
             return true;
         }
         return false;
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::updateUserBonusPoints ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::updateUserBonusPoints ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -562,17 +608,22 @@ bool Database::createClientTorrent()
         pstmt->setInt(6, annInfo->getEvent());
         if (pstmt->executeQuery())
         {
+            *logger << "Created new clientTorrents " << "\n";
             std::cout << "Created new clientTorrents " << "\n";
             return true;
         }
         else
         {
+            *logger << "Failed creating new clientTorrents " << "\n";
             std::cout << "Failed creating new clientTorrents " << "\n";
             return false;
         }
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::createClientTorrent ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::createClientTorrent ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -591,11 +642,13 @@ bool Database::getIpaId(bool recursive)
         {
             int ipaId = res->getInt("id");
             annInfo->setIpaId(ipaId);
+            *logger << "Using known IP Address " << "\n";
             std::cout << "Using known IP Address " << "\n";
             return true;
         }
         else
         {
+            *logger << "Using unknown IP Address. Will insert into database " << "\n";
             std::cout << "Using unknown IP Address. Will insert into database " << "\n";
             if (recursive)
             {
@@ -609,6 +662,9 @@ bool Database::getIpaId(bool recursive)
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::getIpaId ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::getIpaId ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -632,10 +688,12 @@ bool Database::getClientId(bool recursive)
                 int clientId = res->getInt("id");
                 annInfo->setClientId(clientId);
                 std::cout << "Using a known client" << "\n";
+                *logger << "Using a known client" << "\n";
                 return true;
             }
             else
             {
+                *logger << "Client unknown. Will try to update or create one. " << "\n";
                 std::cout << "Client unknown. Will try to update or create one. " << "\n";
                 if (recursive)
                 {
@@ -650,6 +708,9 @@ bool Database::getClientId(bool recursive)
         }
         catch (sql::SQLException &e)
         {
+            *logger << "Database::getClientId ";
+            *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+            *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
             std::cout << "Database::getClientId ";
             std::cout << " (MySQL error code: " << e.getErrorCode();
             std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -658,6 +719,7 @@ bool Database::getClientId(bool recursive)
     }
     else
     {
+        *logger << "Should never end up here.." << "\n";
         std::cout << "Should never end up here.." << "\n";
         return false;
     }
@@ -673,17 +735,22 @@ bool Database::createIpAddress()
         pstmt->setInt(2, annInfo->getUserId());
         if (pstmt->executeQuery())
         {
+            *logger << "IP Address added to Database. Will do recursive function to get ipaId" << "\n";
             std::cout << "IP Address added to Database. Will do recursive function to get ipaId" << "\n";
             return getIpaId(false);
         }
         else
         {
+            *logger << "Failed adding IP Address to the Database " << "\n";
             std::cout << "Failed adding IP Address to the Database " << "\n";
             return false;
         }
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::createIpAddress ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::createIpAddress ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -701,17 +768,22 @@ bool Database::createClient()
         pstmt->setInt(3, annInfo->getIpaId());
         if (pstmt->executeQuery())
         {
+            *logger << "Added new client to the Database. Will do recursive function to get clientId" << "\n";
             std::cout << "Added new client to the Database. Will do recursive function to get clientId" << "\n";
             return getClientId(false);
         }
         else
         {
+            *logger << "Failed adding new client to the Database " << "\n";
             std::cout << "Failed adding new client to the Database " << "\n";
             return false;
         }
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::createClient ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::createClient ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -726,6 +798,10 @@ bool Database::updateUserTorrentTotals()
         uint64_t downloadedTotalIncrement = annInfo->getDownloaded() - annInfo->getOldDownload();
         uint64_t uploadedTotalIncrement = annInfo->getUploaded() - annInfo->getOldUpload();
 
+        *logger << "oldDownloaded: " << std::to_string(annInfo->getOldDownload()) << "\n";
+        *logger << "oldUploaded: " << std::to_string(annInfo->getOldUpload()) << "\n";
+        *logger << "Downloaded INC: " << std::to_string(downloadedTotalIncrement) << "\n";
+        *logger << "Uploaded INC: " << std::to_string(uploadedTotalIncrement) << "\n";
         std::cout << "oldDownloaded: " << annInfo->getOldDownload() << "\n";
         std::cout << "oldUploaded: " << annInfo->getOldUpload() << "\n";
         std::cout << "Downloaded INC: " << downloadedTotalIncrement << "\n";
@@ -743,10 +819,12 @@ bool Database::updateUserTorrentTotals()
         res = pstmt->executeQuery();
         if(res->next())
         {
+            *logger << "About to do booltest" << "\n";
             std::cout << "About to do booltest" << "\n";
             int boolTest = res->getInt("1");
             if(boolTest==1)
             {
+                *logger << "Booltest PASSED!\n";
                 std::cout << "Booltest PASSED!\n";
 
                 /* If user har restartet the same torrent we do not
@@ -754,12 +832,14 @@ bool Database::updateUserTorrentTotals()
                 //if(downloadedTotalIncrement <= 0)
                 if(downloadedTotalIncrement < 0)
                 {
+                    *logger << "Down increment is less than zero\n";
                     std::cout << "Down increment is less than zero\n";
                     downloadedTotalIncrement = annInfo->getDownloaded();
                 }
                 //if(uploadedTotalIncrement<=0)
                 if(uploadedTotalIncrement < 0)
                 {
+                    *logger << "UP increment is less than zero";
                     std::cout << "UP increment is less than zero";
                     uploadedTotalIncrement = annInfo->getUploaded();
                 }
@@ -774,19 +854,25 @@ bool Database::updateUserTorrentTotals()
                 pstmt->setInt(3, annInfo->getTorrentId());
                 pstmt->setInt(4, annInfo->getUserId());
                 pstmt->executeUpdate();
+                *logger << "Updated userTorrentTotals in the Database" << "\n";
                 std::cout << "Updated userTorrentTotals in the Database" << "\n";
                 return true;
             }
             else
             {
+                *logger << "Failed booltest\n";
                 std::cout << "Failed booltest\n";
             }               
         }
+        *logger << "Failed to update userTorrentTotals in the Database. Will create one " << "\n";
         std::cout << "Failed to update userTorrentTotals in the Database. Will create one " << "\n";
         return createUserTorrentTotals();
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::updateUserTorrentTotals ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::updateUserTorrentTotals ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -805,17 +891,22 @@ bool Database::createUserTorrentTotals()
         pstmt->setUInt64(4, annInfo->getUploaded());
         if (pstmt->executeQuery())
         {
+            *logger << "Added new userTorrentTotals to the Database" << "\n";
             std::cout << "Added new userTorrentTotals to the Database" << "\n";
             return true;
         }
         else
         {
+            *logger << "Failed adding new userTorrentTotals to the Database " << "\n";
             std::cout << "Failed adding new userTorrentTotals to the Database " << "\n";
             return false;
         }
     }
     catch (sql::SQLException &e)
     {
+        *logger  << "Database::createUserTorrentTotals ";
+        *logger  << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger  << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::createUserTorrentTotals ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -853,17 +944,22 @@ bool Database::updateClient()
         pstmt->setInt(3, annInfo->getPort());
         if (pstmt->executeUpdate() > 0)
         {
+            *logger << "Updated Client. Will do recursive function to get clientId" << "\n";
             std::cout << "Updated Client. Will do recursive function to get clientId" << "\n";
             return getClientId(false);
         }
         else
         {
             std::cout << "Failed to update Client. Will create one" << "\n";
+            *logger << "Failed to update Client. Will create one" << "\n";
             return createClient();
         }
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::updateClient ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::updateClient ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";
@@ -900,6 +996,7 @@ bool Database::setOldUploadAndDownload()
         }
         else
         {
+            *logger << "Could not retrieve old upload and download values. Perhaps this is their first announce?" << "\n";
             std::cout << "Could not retrieve old upload and download values. Perhaps this is their first announce?" << "\n";
             //The default old upload and download is set to 0, so this should not be a problem.
         }
@@ -908,6 +1005,9 @@ bool Database::setOldUploadAndDownload()
     }
     catch (sql::SQLException &e)
     {
+        *logger << "Database::setOldUploadAndDownload ";
+        *logger << " (MySQL error code: " << std::to_string(e.getErrorCode());
+        *logger << ", SQLState: " << std::string(e.getSQLState()) << " )" << "\n";
         std::cout << "Database::setOldUploadAndDownload ";
         std::cout << " (MySQL error code: " << e.getErrorCode();
         std::cout << ", SQLState: " << e.getSQLState() << " )" << "\n";

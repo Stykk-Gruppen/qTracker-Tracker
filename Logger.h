@@ -11,7 +11,7 @@ public:
 	~Logger();
 	void write(std::string);
 	void timestamp();
-	friend void operator<<(const Logger& l,std::string);
+	friend const Logger& operator<<(const Logger& l,std::string);
 private:
 	std::ofstream *outfile;
 };
