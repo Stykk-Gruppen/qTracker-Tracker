@@ -1,6 +1,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+#include <ctime>
 #include <fstream>
 
 class Logger

@@ -2,8 +2,10 @@
 
 Database::Database()
 {
+    logger = new Logger();
     try
     {
+
         // Create a connection
         driver = get_driver_instance();
         std::string t = "tcp://";
@@ -21,6 +23,7 @@ Database::Database()
 
 Database::~Database()
 {
+    delete logger;
     delete con;
     delete pstmt;
     delete res;

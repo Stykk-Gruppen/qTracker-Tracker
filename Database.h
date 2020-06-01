@@ -10,7 +10,7 @@
 #include "Torrent.h"
 #include "AnnounceInfo.h"
 #include <math.h>
-
+#include "Logger.h"
 #include <boost/algorithm/string.hpp>
 
 /*
@@ -35,6 +35,7 @@ public:
 	std::string getErrorMessage();
 
 private:
+	Logger *logger;
 	sql::Driver* driver;
 	sql::Connection* con;
 	sql::PreparedStatement* pstmt;

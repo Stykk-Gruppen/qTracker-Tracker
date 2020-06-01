@@ -2,10 +2,10 @@ PROG = qTracker
 CC = g++
 CPPFLAGS = -I /usr/include -L /usr/lib
 LDFLAGS = -lmysqlcppconn
-LINUXUSER = qTracker
-LINUXFOLDER = cpp
+LINUXUSER = tarves
+LINUXFOLDER = qtracker
 
-OBJS = main.o Server.o Database.o Torrent.o Peer.o AnnounceInfo.o
+OBJS = main.o Server.o Database.o Torrent.o Peer.o AnnounceInfo.o Logger.o
 
 all: $(PROG) .depend
 
