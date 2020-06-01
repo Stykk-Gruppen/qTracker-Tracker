@@ -10,7 +10,8 @@ public:
 	Logger();
 	~Logger();
 	void write(std::string);
-	//Logger operator<<(const Logger& l,std::string);
+	void timestamp();
+	friend void operator<<(const Logger& l,std::string);
 private:
 	std::ofstream *outfile;
 };
