@@ -75,7 +75,7 @@ std::string Server::buildErrorDict()
 	std::string errorMessage = db->getErrorMessage();
 	std::cout << "Got error message, building dict ";
 	bencode::encode(stream, bencode::dict{
-		{"failure_reason", errorMessage}
+		{"failure reason", errorMessage}
 		});
 
 	std::string streamString =  stream.str();
