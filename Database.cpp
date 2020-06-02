@@ -601,7 +601,9 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
         }
         //Update bonus points
         std::cout << "Skal oppdatere bonus points\n Increment = " << bonusPointIncrement << "\n";
-        pstmt = con->prepareStatement
+        if(bonusPointIncrement > 0)
+        {
+            pstmt = con->prepareStatement
         (
             "UPDATE user SET points = points + ? WHERE id = ?"
         );
@@ -618,6 +620,9 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
         }
         std::cout << "update returnerte 0 eller mindre\n";
         return false;
+        }
+        return true;
+        
     }
     catch (sql::SQLException &e)
     {
