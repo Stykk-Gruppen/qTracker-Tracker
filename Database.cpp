@@ -950,6 +950,8 @@ bool Database::createUserTorrentTotals()
 
 double Database::calcBonusPoints(uint64_t torrentSizeBytes, int newSeedMinutes, int numberOfSeeders, int totalSeedTimeMinutes)
 {
+    if(newSeedMinutes == 0) return 0;
+
     const double bytesInGB = 1000000000.0;
     const double minutesInHour = 60.0;
     const double minutesInDay = 1400.0;
