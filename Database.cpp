@@ -246,7 +246,6 @@ bool Database::getUserId()
         std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
         return false;
     }
-
 }
 
 bool Database::userCanLeech()
@@ -399,7 +398,9 @@ bool Database::updateClientTorrents()
             pstmt = con->prepareStatement
             (
                 "SELECT "
+                        "isActive, "
                         "TIMESTAMPDIFF(MINUTE, lastActivity, NOW()) AS 'newSeedMinutes' "
+
                 "FROM "
                         "clientTorrents "
                 "WHERE "
@@ -413,6 +414,10 @@ bool Database::updateClientTorrents()
             if(res->next())
             {
                 newSeedMinutes = res->getInt("newSeedMinutes");
+                if(res->getInt("isActive") == 0)
+                {
+                    newSeedMinutes = 0;
+                }
             }
 
             pstmt = con->prepareStatement
@@ -494,10 +499,10 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
                 "AND userId = ?"
         );
 
-        pstmt->setInt(1, annInfo->getTorrentId);
-        pstmt->setInt(2, annInfo->getUserId);
+        pstmt->setInt(1, annInfo->getTorrentId());
+        pstmt->setInt(2, annInfo->getUserId());
 
-        res = prtmt->executeQuery();
+        res = pstmt->executeQuery();
         int totalTimeActive = 0;
         if(res->next())
         {
