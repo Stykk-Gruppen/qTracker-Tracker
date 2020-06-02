@@ -540,6 +540,7 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
 {
     try
     {
+        std::cout << "Inne i updatebonus\n";
         pstmt = con->prepareStatement
         (
             "SELECT "
@@ -554,13 +555,16 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
         pstmt->setInt(1, annInfo->getTorrentId());
         pstmt->setInt(2, annInfo->getUserId());
 
+        std::cout << "Skal kjøre query\n";
+
         res = pstmt->executeQuery();
         int totalTimeActive = 0;
         if(res->next())
         {
             totalTimeActive = res->getInt("timeActive");
+            std::cout << "Fant totalTimeActive = " << totalTimeActive << "\n";
         }
-
+        std::cout << "totalTimeActive = " << totalTimeActive << "\n";
 
         //Bonus point-calc
         pstmt = con->prepareStatement
@@ -579,17 +583,24 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
         pstmt->setInt(2, annInfo->getClientId());
         double bonusPointIncrement = 0;
         res = pstmt->executeQuery();
+
+        std::cout << "Skal finne bonuspointCalc\n";
+
         //If found, get calculations for BP
         if(res->next())
         {
+            std::cout << "Inne i res-next\n";
             int seeders = res->getInt("seeders");
             uint64_t size = res->getUInt64("size");
             if(seeders != 0)
             {
+                std::cout << "Kaller bonusPointIncrement\n";
+
                 bonusPointIncrement = calcBonusPoints(size, newSeedMinutes, seeders, totalTimeActive);
             }
         }
         //Update bonus points
+        std::cout << "Skal oppdatere bonus points\n Increment = " << bonusPointIncrement << "\n";
         pstmt = con->prepareStatement
         (
             "UPDATE user SET points = points + ? WHERE id = ?"
