@@ -877,7 +877,7 @@ bool Database::updateUserTorrentTotals(int newSeedMinutes)
                 }
                 std::string query = "UPDATE userTorrentTotals SET "
                                     "totalDownloaded = totalDownloaded + ?,"
-                                    "totalUploaded = totalUploaded + ? "
+                                    "totalUploaded = totalUploaded + ?, "
                                     "timeActive = timeActive + ? "
                                     "WHERE torrentId = ? AND userId = ?;";
                 //std::cout << "query: \n" << query << "\n";
