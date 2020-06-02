@@ -243,6 +243,12 @@ bool Database::getUserId()
 {
     try
     {
+        if (!con->isValid())
+        {
+            con->reconnect();
+            *logger << "Reconnecting database connection" << "\n";
+            std::cout << "Reconnecting database connection" << std::endl;
+        } 
         pstmt = con->prepareStatement("SELECT id FROM user WHERE torrentPass = ?");
         pstmt->setString(1, annInfo->getTorrentPass());
         res = pstmt->executeQuery();
