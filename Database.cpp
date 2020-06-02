@@ -446,7 +446,6 @@ bool Database::updateClientTorrents()
                 "SELECT "
                         "isActive, "
                         "TIMESTAMPDIFF(MINUTE, lastActivity, NOW()) AS 'newSeedMinutes' "
-
                 "FROM "
                         "clientTorrents "
                 "WHERE "
@@ -471,6 +470,7 @@ bool Database::updateClientTorrents()
                     std::cout << "isActive var lik 0\n";
                 }
             }
+            std::cout << "Forbi res-next";
 
             pstmt = con->prepareStatement
                     (
