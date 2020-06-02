@@ -518,8 +518,10 @@ bool Database::updateClientTorrents()
             }
 
             if(!updateUserBonusPoints(newSeedMinutes))
+            {
                 *logger << "An error occurred within updateUserBonusPoints" << "\n";
                 std::cout << "An error occurred within updateUserBonusPoints" << "\n";
+            }
 
             if (!updateUserTorrentTotals(newSeedMinutes))
             {

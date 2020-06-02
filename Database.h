@@ -40,7 +40,7 @@ private:
 	sql::Connection* con;
 	sql::PreparedStatement* pstmt;
 	sql::ResultSet* res;
-	std::string errorMessage = "";
+	std::string errorMessage = "Unknown Error.";
 	AnnounceInfo* annInfo;
 
 	std::string decode(std::string str);
