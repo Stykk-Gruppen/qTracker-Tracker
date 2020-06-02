@@ -52,6 +52,9 @@ void Server::central()
 
 void Server::handle_client(int newsockfd)
 {
+	delete db;
+	db = new Database(logger);
+
 	bzero(buffer, 4096);
 	read(newsockfd, buffer, 4096);
 
