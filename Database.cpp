@@ -508,6 +508,8 @@ bool Database::updateClientTorrents()
             if (pstmt->executeUpdate() <= 0)
             {
                 std::cout << "clientTorrent doesn't exist. Will create one. " << "\n";
+                std::cout << "clientId:" << annInfo->getClientId() <<"\n";
+                std::cout << "torrentId: " << annInfo->getTorrentId() <<"\n";
                 *logger << "clientTorrent doesn't exist. Will create one. " << "\n";
                 if (!createClientTorrent())
                 {
