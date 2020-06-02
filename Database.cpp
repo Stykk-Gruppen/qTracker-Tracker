@@ -546,7 +546,6 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
 {
     try
     {
-        std::cout << "Inne i updatebonus\n";
         pstmt = con->prepareStatement
         (
             "SELECT "
@@ -561,16 +560,12 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
         pstmt->setInt(1, annInfo->getTorrentId());
         pstmt->setInt(2, annInfo->getUserId());
 
-        std::cout << "Skal kjøre query\n";
-
         res = pstmt->executeQuery();
         int totalTimeActive = 0;
         if(res->next())
         {
             totalTimeActive = res->getInt("timeActive");
-            std::cout << "Fant totalTimeActive = " << totalTimeActive << "\n";
         }
-        std::cout << "totalTimeActive = " << totalTimeActive << "\n";
 
         //Bonus point-calc
         pstmt = con->prepareStatement
@@ -590,8 +585,6 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
         double bonusPointIncrement = 0;
         res = pstmt->executeQuery();
 
-        std::cout << "Skal finne bonuspointCalc\n";
-
         //If found, get calculations for BP
         if(res->next())
         {
@@ -600,13 +593,10 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
             uint64_t size = res->getUInt64("size");
             if(seeders != 0)
             {
-                std::cout << "Kaller bonusPointIncrement\n";
-
                 bonusPointIncrement = calcBonusPoints(size, newSeedMinutes, seeders, totalTimeActive);
             }
         }
         //Update bonus points
-        std::cout << "Skal oppdatere bonus points\n Increment = " << bonusPointIncrement << "\n";
         if(bonusPointIncrement > 0)
         {
                 pstmt = con->prepareStatement
@@ -616,15 +606,12 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
             pstmt->setDouble(1, bonusPointIncrement);
             pstmt->setInt(2, annInfo->getUserId());
 
-            std::cout << "oppdaterer poeng paa bruker " << annInfo->getUserId() << "\n"; 
-
             if(pstmt->executeUpdate() > 0)
             {
                 std::cout << "Added " << bonusPointIncrement << " to user: " << annInfo->getUserId() << "\n";
                 *logger << "Added " << std::to_string(bonusPointIncrement) << " to user: " << std::to_string(annInfo->getUserId()) << "\n";
                 return true;
             }
-            std::cout << "update returnerte 0 eller mindre\n";
             return false;
         }
         return true;
