@@ -439,6 +439,7 @@ bool Database::updateClientTorrents()
     {
         try
         {
+            std::cout << "Inne i try i updateClientTorrents\n";
             //Get new seed minutes for later bonus point calc:
             pstmt = con->prepareStatement
             (
@@ -456,12 +457,18 @@ bool Database::updateClientTorrents()
             pstmt->setInt(2, annInfo->getClientId());
             int newSeedMinutes = 0;
             res = pstmt->executeQuery();
+
+            std::cout << "Kjort Query\n";
+
             if(res->next())
             {
+                std::cout << "Fikk treff på query\n";
                 newSeedMinutes = res->getInt("newSeedMinutes");
+                std::cout << "newSeedMinutes = " << newSeedMinutes << "\n"; 
                 if(res->getInt("isActive") == 0)
                 {
                     newSeedMinutes = 0;
+                    std::cout << "isActive var lik 0\n";
                 }
             }
 
@@ -499,6 +506,8 @@ bool Database::updateClientTorrents()
             pstmt->setInt(8, annInfo->getClientId());
             pstmt->setInt(9, annInfo->getTorrentId());
             pstmt->setString(10, annInfo->getTorrentPass());
+
+            std::cout << "Skal kjøre update\n";
             if (pstmt->executeUpdate() <= 0)
             {
                 std::cout << "clientTorrent doesn't exist. Will create one. " << "\n";
