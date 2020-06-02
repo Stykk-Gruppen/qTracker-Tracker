@@ -423,7 +423,6 @@ bool Database::updateClientTorrents()
                                 "ipAddress AS ip, "
                                 "user AS u "
                         "SET "
-                                "timeActive = IF(? = 2, timeActive, IF(isActive = 1, timeActive + TIMESTAMPDIFF(MINUTE, lastActivity, NOW()), timeActive)), "
                                 "isActive = IF(? < 3, 1, 0), "
                                 "announced = announced + 1, "
                                 "completed = IF(? = 1, completed + 1, completed), "
@@ -462,7 +461,7 @@ bool Database::updateClientTorrents()
             if(!updateUserBonusPoints(newSeedMinutes))
                 std::cout << "An error occurred within updateUserBonusPoints" << std::endl;
 
-            if (!updateUserTorrentTotals())
+            if (!updateUserTorrentTotals(newSeedMinutes))
             {
                 return false;
             }
@@ -484,11 +483,32 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
 {
     try
     {
+        pstmt = con->prepareStatement
+        (
+            "SELECT "
+                "timeActive "
+            "FROM "
+                "userTorrentTotals "
+            "WHERE "
+                "torrentId = ? "
+                "AND userId = ?"
+        );
+
+        pstmt->setInt(1, annInfo->getTorrentId);
+        pstmt->setInt(2, annInfo->getUserId);
+
+        res = prtmt->executeQuery();
+        int totalTimeActive = 0;
+        if(res->next())
+        {
+            totalTimeActive = res->getInt("timeActive");
+        }
+
+
         //Bonus point-calc
         pstmt = con->prepareStatement
         (
             "SELECT "
-                    "timeActive, " 
                     "(SELECT IFNULL(SUM(isActive), 0) FROM clientTorrents AS ct WHERE ct.torrentId = torrentId "
                     "AND (TIMESTAMPDIFF(MINUTE, ct.lastActivity, NOW()) < 60)) AS 'seeders', "
                     "(SELECT SUM(length) FROM torrentFiles AS tf WHERE tf.torrentId = torrentId) AS 'size' "
@@ -505,7 +525,6 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
         //If found, get calculations for BP
         if(res->next())
         {
-            int totalTimeActive = res->getInt("timeActive");
             int seeders = res->getInt("seeders");
             uint64_t size = res->getUInt64("size");
             if(seeders != 0)
@@ -711,7 +730,7 @@ bool Database::createClient()
     }
 }
 
-bool Database::updateUserTorrentTotals()
+bool Database::updateUserTorrentTotals(int newSeedMinutes)
 {
     try
     {
@@ -758,13 +777,15 @@ bool Database::updateUserTorrentTotals()
                 std::string query = "UPDATE userTorrentTotals SET "
                                     "totalDownloaded = totalDownloaded + ?,"
                                     "totalUploaded = totalUploaded + ? "
+                                    "timeActive = timeActive + ? "
                                     "WHERE torrentId = ? AND userId = ?;";
                 //std::cout << "query: \n" << query << std::endl;
                 pstmt = con->prepareStatement(query);
                 pstmt->setUInt64(1, downloadedTotalIncrement);
                 pstmt->setUInt64(2, uploadedTotalIncrement);
-                pstmt->setInt(3, annInfo->getTorrentId());
-                pstmt->setInt(4, annInfo->getUserId());
+                pstmt->setInt(3, newSeedMinutes);
+                pstmt->setInt(4, annInfo->getTorrentId());
+                pstmt->setInt(5, annInfo->getUserId());
                 pstmt->executeUpdate();
                 std::cout << "Updated userTorrentTotals in the Database" << std::endl;
                 return true;

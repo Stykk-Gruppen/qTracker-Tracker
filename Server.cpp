@@ -69,6 +69,7 @@ void Server::handle_client(int newsockfd)
 	write(newsockfd, answer.c_str(), strlen(answer.c_str()));
 }
 
+
 std::string Server::buildErrorDict()
 {
 	std::ostringstream stream;

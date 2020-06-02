@@ -59,7 +59,7 @@ private:
 	bool ipaIsBanned();
 	bool getIpaId(bool recursive);
 	bool createIpAddress();
-	bool updateUserTorrentTotals();
+	bool updateUserTorrentTotals(int newSeedMinutes);
 	bool createUserTorrentTotals();
 	bool updateClientTorrents();
 	bool createClientTorrent();
