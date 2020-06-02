@@ -52,7 +52,7 @@ void Server::central()
 
 void Server::handle_client(int newsockfd)
 {
-	delete db;
+	delete
 	db = new Database(logger);
 
 	bzero(buffer, 4096);
@@ -83,8 +83,6 @@ std::string Server::buildErrorDict()
 {
 	std::ostringstream stream;
 	std::string errorMessage = db->getErrorMessage();
-	std::cout << "Got error message, building dict ";
-	*logger << "Got error message, building dict ";
 	bencode::encode(stream, bencode::dict{
 		{"failure reason", errorMessage}
 		});
