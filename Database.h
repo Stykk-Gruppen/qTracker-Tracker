@@ -10,7 +10,7 @@
 #include "Torrent.h"
 #include "AnnounceInfo.h"
 #include <math.h>
-
+#include "Logger.h"
 #include <boost/algorithm/string.hpp>
 
 /*
@@ -28,13 +28,14 @@
 class Database
 {
 public:
-	Database();
+	Database(Logger*);
 	~Database();
 	std::string insertClientInfo(const std::vector<std::string*> &vectorOfArrays);
 	Torrent getTorrent(std::string infoHash);
 	std::string getErrorMessage();
 
 private:
+	Logger *logger;
 	sql::Driver* driver;
 	sql::Connection* con;
 	sql::PreparedStatement* pstmt;

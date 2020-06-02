@@ -18,6 +18,7 @@
 #include <map>
 #include "bencode.hpp"
 #include "Database.h"
+#include "Logger.h"
 
 using namespace bencode;
 
@@ -30,6 +31,7 @@ public:
 	void handle_client(int newsockfd);
 	
 private:
+	Logger *logger;
 	int sockfd;
 	int port;
 	int pid;
