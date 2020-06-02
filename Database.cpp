@@ -603,23 +603,23 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
         std::cout << "Skal oppdatere bonus points\n Increment = " << bonusPointIncrement << "\n";
         if(bonusPointIncrement > 0)
         {
-            pstmt = con->prepareStatement
-        (
-            "UPDATE user SET points = points + ? WHERE id = ?"
-        );
-        pstmt->setDouble(1, bonusPointIncrement);
-        pstmt->setInt(2, annInfo->getUserId());
+                pstmt = con->prepareStatement
+            (
+                "UPDATE user SET points = points + ? WHERE id = ?"
+            );
+            pstmt->setDouble(1, bonusPointIncrement);
+            pstmt->setInt(2, annInfo->getUserId());
 
-        std::cout << "oppdaterer poeng paa bruker " << annInfo->getUserId() << "\n"; 
+            std::cout << "oppdaterer poeng paa bruker " << annInfo->getUserId() << "\n"; 
 
-        if(pstmt->executeUpdate() > 0)
-        {
-            std::cout << "Added " << bonusPointIncrement << " to user: " << annInfo->getUserId() << "\n";
-            *logger << "Added " << std::to_string(bonusPointIncrement) << " to user: " << std::to_string(annInfo->getUserId()) << "\n";
-            return true;
-        }
-        std::cout << "update returnerte 0 eller mindre\n";
-        return false;
+            if(pstmt->executeUpdate() > 0)
+            {
+                std::cout << "Added " << bonusPointIncrement << " to user: " << annInfo->getUserId() << "\n";
+                *logger << "Added " << std::to_string(bonusPointIncrement) << " to user: " << std::to_string(annInfo->getUserId()) << "\n";
+                return true;
+            }
+            std::cout << "update returnerte 0 eller mindre\n";
+            return false;
         }
         return true;
         
