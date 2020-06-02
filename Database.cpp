@@ -446,7 +446,6 @@ bool Database::updateClientTorrents()
                 "SELECT "
                         "isActive, "
                         "TIMESTAMPDIFF(MINUTE, lastActivity, NOW()) AS 'newSeedMinutes' "
-
                 "FROM "
                         "clientTorrents "
                 "WHERE "
@@ -471,6 +470,7 @@ bool Database::updateClientTorrents()
                     std::cout << "isActive var lik 0\n";
                 }
             }
+            std::cout << "Forbi res-next";
 
             pstmt = con->prepareStatement
                     (
@@ -498,14 +498,13 @@ bool Database::updateClientTorrents()
                     );
             pstmt->setInt(1, annInfo->getEvent());
             pstmt->setInt(2, annInfo->getEvent());
-            pstmt->setInt(3, annInfo->getEvent());
-            pstmt->setUInt64(4, annInfo->getDownloaded());
-            pstmt->setUInt64(5, annInfo->getLeft());
-            pstmt->setUInt64(6, annInfo->getUploaded());
-            pstmt->setInt(7, annInfo->getEvent());
-            pstmt->setInt(8, annInfo->getClientId());
-            pstmt->setInt(9, annInfo->getTorrentId());
-            pstmt->setString(10, annInfo->getTorrentPass());
+            pstmt->setUInt64(3, annInfo->getDownloaded());
+            pstmt->setUInt64(4, annInfo->getLeft());
+            pstmt->setUInt64(5, annInfo->getUploaded());
+            pstmt->setInt(6, annInfo->getEvent());
+            pstmt->setInt(7, annInfo->getClientId());
+            pstmt->setInt(8, annInfo->getTorrentId());
+            pstmt->setString(9, annInfo->getTorrentPass());
 
             std::cout << "Skal kjøre update\n";
             if (pstmt->executeUpdate() <= 0)
@@ -880,7 +879,7 @@ bool Database::updateUserTorrentTotals(int newSeedMinutes)
                 }
                 std::string query = "UPDATE userTorrentTotals SET "
                                     "totalDownloaded = totalDownloaded + ?,"
-                                    "totalUploaded = totalUploaded + ? "
+                                    "totalUploaded = totalUploaded + ?, "
                                     "timeActive = timeActive + ? "
                                     "WHERE torrentId = ? AND userId = ?;";
                 //std::cout << "query: \n" << query << "\n";
