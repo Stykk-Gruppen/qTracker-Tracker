@@ -243,6 +243,7 @@ bool Database::getUserId()
 {
     try
     {
+        if (!con->isValid()) con->reconnect();
         pstmt = con->prepareStatement("SELECT id FROM user WHERE torrentPass = ?");
         pstmt->setString(1, annInfo->getTorrentPass());
         res = pstmt->executeQuery();
