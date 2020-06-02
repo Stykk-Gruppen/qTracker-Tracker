@@ -11,6 +11,7 @@ class Torrent
 public:
 	Torrent();
 	Torrent(int _trackerId, int _seeders, int _leechers);
+	~Torrent();
 	int trackerId;
 	int seeders;
 	int leechers;

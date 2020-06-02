@@ -12,7 +12,6 @@ const Logger& operator<<(const Logger& l,std::string s)
 	return l;
 }
 
-
 void Logger::timestamp(){
 	time_t now = time(0);
    	char* dt = ctime(&now);
