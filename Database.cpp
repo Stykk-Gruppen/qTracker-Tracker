@@ -607,12 +607,16 @@ bool Database::updateUserBonusPoints(int newSeedMinutes)
         );
         pstmt->setDouble(1, bonusPointIncrement);
         pstmt->setInt(2, annInfo->getUserId());
+
+        std::cout << "oppdaterer poeng paa bruker " << annInfo->getUserId() << "\n"; 
+
         if(pstmt->executeUpdate() > 0)
         {
             std::cout << "Added " << bonusPointIncrement << " to user: " << annInfo->getUserId() << "\n";
             *logger << "Added " << std::to_string(bonusPointIncrement) << " to user: " << std::to_string(annInfo->getUserId()) << "\n";
             return true;
         }
+        std::cout << "update returnerte 0 eller mindre\n";
         return false;
     }
     catch (sql::SQLException &e)
