@@ -5,7 +5,7 @@ A private tracker backend compatible with the [qTracker-Client](https://github.c
 * `Boost 1.23+`
 
 # Documentation
-For the time being there is no documentation available. You might find the development process in 
+The online documentation is available at this [website](https://tarves.no/docs/QTracker-Tracker/). You might find the development process in 
 the client's [wiki](https://github.com/Feqzz/qTracker-Client/wiki) interesting.
 
 # Client
