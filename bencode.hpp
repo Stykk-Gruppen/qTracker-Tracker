@@ -1,3 +1,6 @@
+/*Copyright (c) 2014-2020, Jim Porter
+All rights reserved.*/
+
 #ifndef INC_BENCODE_HPP
 #define INC_BENCODE_HPP
 
